@@ -38,19 +38,19 @@ Dim sColorSynergismeList, sColorSynergismeGift, sColorMenuSynergismeListMenu, sC
 Dim sColorMissionList, sColorMissionContinue, sColorGiftMenu, sColorExploreHome, sColorNoExploreP
 Dim sColorReidooburiHP
 
-Dim Retry, Cycles, RSAT, RST,Helper,PunchPower,DogeMode
+Dim sReset,Retry, Cycles, RSAT, RST,Helper,PunchPower,DogeMode
+Dim tRSAT,tRST
 Dim rTimeStep03, rTimeStep05, rTimeStep, rTimeStep2
 Dim iTimeOut, iTimeOut2, iTimeOut3
 Dim iPutFlag, iRedFlag, sLevel, sDesFlag
 Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
+
 isDoge = 0
 
 rScale = 1
 RDcount = 0
 RLcount = 0
-RSAT = 10
-RST = 5
 rTimeStep03 = 0.33
 rTimeStep05 = 0.5
 rTimeStep = 1
@@ -217,7 +217,7 @@ iPosOnePBattle = Array(500,650)
 iClickOnePBattle = Array(500, 650)
 iClick3PBattle = Array(700, 650)
 iPosExploreHome = Array(1180, 20)
-//???Color???
+//Color
 iPosNoExploreP = Array(500, 650)
 
 iPosTakeGift = Array(20, 635)
@@ -226,12 +226,22 @@ iPosGiftMenu = Array(20, 520)
 ///////////////////////////////////////////////////////////////////////////////////
 
 //Zero
+If ReadUIConfig("sReset ")=true then
+    sDesFlag = 1 
+	Else
+    sDesFlag = 0
+End If
+tRSAT = ReadUIConfig("iRSAT", "10")
+tRST = ReadUIConfig("iRST", "5")
+RSAT = CInt(tRSAT)
+RST = CInt(tRST)
 RunApp "com.square_enix.ocsd.magical"
 ShowMessage "初始化完成"
 Delay 10000
 Rem CIFMM
 
 //UI tset
+
 If ReadUIConfig("sDesFlag")=true then
     sDesFlag = 1 
 	Else
@@ -313,7 +323,10 @@ End If
 
 //reset anything
 If Retry > RSAT Then 
-    'EndScript
+    If sReset = 0 Then
+    EndScript
+    End If
+    KillApp "com.square_enix.ocsd.magical"
     Goto initialize
 End If
 

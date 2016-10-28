@@ -38,16 +38,13 @@ Dim sColorSynergismeList, sColorSynergismeGift, sColorMenuSynergismeListMenu, sC
 Dim sColorMissionList, sColorMissionContinue, sColorGiftMenu, sColorExploreHome, sColorNoExploreP
 Dim sColorReidooburiHP
 
-Dim sReset,Retry, Cycles, RSAT, RST,Helper,PunchPower,DogeMode
-Dim tRSAT,tRST
+Dim sReset,Retry, Cycles, RSAT,tRSAT,Helper,PunchPower,DogeMode
 Dim rTimeStep03, rTimeStep05, rTimeStep, rTimeStep2
 Dim iTimeOut, iTimeOut2, iTimeOut3
 Dim iPutFlag, iRedFlag, sLevel, sDesFlag
 Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
-
 isDoge = 0
-
 rScale = 1
 RDcount = 0
 RLcount = 0
@@ -231,10 +228,8 @@ If ReadUIConfig("sReset ")=true then
 	Else
     sDesFlag = 0
 End If
-tRSAT = ReadUIConfig("iRSAT", "10")
-tRST = ReadUIConfig("iRST", "5")
+tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)
-RST = CInt(tRST)
 RunApp "com.square_enix.ocsd.magical"
 ShowMessage "初始化完成"
 Delay 10000
@@ -326,19 +321,13 @@ If Retry > RSAT Then
     If sReset = 0 Then
     EndScript
     End If
-    KillApp "com.square_enix.ocsd.magical"
-    Goto initialize
-End If
-
-
-// Reset
-If Retry > RST Then 
 	KillApp "com.square_enix.ocsd.magical"
     Delay 10000
     RunApp "com.square_enix.ocsd.magical"
     Delay 10000
-    
+    Goto initialize
 End If
+
 TracePrint "Check if main menu"
 // Check if main menu
 btmp = bFlag(iRot, rScale, iPosStart(0), iPosStart(1), iClickNone(0), iClickNone(1), sColorStart, 0, rTimeStep, 0, 1)

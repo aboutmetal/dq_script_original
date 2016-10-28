@@ -13,7 +13,7 @@ Rem initialize
 Dim iPos(1),iRect,btmp
 Dim rScale,iRot
 Dim NoSynergismeP
-Dim coOrange, coPurple, coRed, coYellow,coYellow2, coGrey, coCyan
+Dim coOrange, coPurple, coRed, coYellow, coGrey, coCyan
 Dim coBlack, coCyan2, coCyan3, coPurple2
 Dim coWine, coSkin, coDarkSkin, coGrey2,coWhite
 
@@ -63,8 +63,7 @@ coPurple = "F745A8-091009"
 coPurple2 = "FC2AE2-090911"
 coRed = "2B2BF8-090909"
 coYellow = "40DBFE-091209"
-coYellow2 = "1C1B1C-090909"
-coGrey = "6E5C25-0A0A0A"
+coGrey = "6E5C25-090909"
 coGrey2 = "CCC2B7-090909"
 coCyan = "FFDC43-090909"
 coCyan2 = "EEEC82-090909"
@@ -74,7 +73,7 @@ coDarkSkin = "8F96B6-090909"
 coBlack = "000000-050505"
 coWine = "170E73-090909"
 coWhite = "FFFFFF"
-
+coGrey = "675B23-090909"
 
 sColorLv1= coWhite
 sColorStart = coRed
@@ -83,7 +82,7 @@ sColorMainHome = coCyan
 sColorMainBattleP = coGrey
 sColorMainBattle = coOrange
 sColorMainExplore = coDarkSkin
-sColorMainExploreP = coYellow2
+sColorMainExploreP = coGrey
 sColorMenuBattleHome = coPurple
 sColorMenuBattleP = coGrey
 sColorChooseOpponent = coWine
@@ -95,7 +94,7 @@ sColorNo = coPurple
 sColorChoose = coSkin
 sColorOk = coRed
 sColorMainSynergismeP = coGrey
-sColorMenuSynergisme = coYellow
+sColorMenuSynergisme = coGrey
 sColorMenuSynergismeP = coGrey
 sColorReidooburiSeach = coOrange
 sColorSynergismeList = coCyan3
@@ -177,8 +176,8 @@ iClickBattleListHome = Array(1220, 20)
 iPosYes = Array(480,540)
 iClickYes = Array(480, 540)
 
-iPosNo = Array(850,540)
-iClickNo = Array(850,540)
+iPosNo = Array(800,540)
+iClickNo = Array(800,540)
 
 iPosChoose = Array(320,155)
 
@@ -210,7 +209,7 @@ iClickMissionList = Array(170, 600)
 iPosMissionContinue = Array(790, 550)
 
 iClickNoHelpSynergisme = Array(320, 100)
-iClickFisrtHeler = Array(320, 280)
+iClickFisrtHeler = Array(320, 250)
 iClickGlobalRequest = Array(60, 650)
 
 iPosOnePBattle = Array(500,650)
@@ -225,9 +224,7 @@ iClickTakeGift = Array(20, 635)
 iPosGiftMenu = Array(20, 520)
 ///////////////////////////////////////////////////////////////////////////////////
 
-
-
-//UI tset
+//Zero
 If ReadUIConfig("sReset ")=true then
     sReset = 1 
 	Else
@@ -239,7 +236,9 @@ RunApp "com.square_enix.ocsd.magical"
 ShowMessage "初始化完成"
 Delay 10000
 Rem CIFMM
-/*
+
+//UI tset
+
 If ReadUIConfig("sDesFlag")=true then
     sDesFlag = 1 
 	Else
@@ -312,20 +311,17 @@ ElseIf ReadUIConfig("Helper") = 1 Then
 ElseIf ReadUIConfig("Helper") = 2 Then
 	Helper = 2
 End If
-*/
 
-iPutFlag = 1
-DogeMode = 0
-sLevel = 1
-PunchPower = 0
-Helper = 2
-Cycles = 30
-iRedFlag = 0
+'iPutFlag = 1
+'DogeMode = 1
+'sLevel = 1
+'PunchPower = 1
+'Helper = 2
 
 //reset anything
 If Retry > RSAT Then 
     If sReset = 0 Then
-    	EndScript
+    EndScript
     End If
 	KillApp "com.square_enix.ocsd.magical"
     Delay 10000
@@ -363,23 +359,17 @@ If btmp = 0 Then
     Retry=Retry+1
     Goto Refresh
 End If
+//checkExploreP
+btmp = bFlag(iRot, rScale, iPosExploreP(0), iPosExploreP(1), iClickSkip(0),iClickSkip(1), sColorExploreP, 0, rTimeStep03, 0, iTimeOut3)
+If btmp = 0 Then
+    ExplorePMax = 1
+    Else 
+    ExplorePMax = 0
+End If
 
 btmp = bFlag(iRot, rScale, iPosMainHome(0), iPosMainHome(1), iClickSkip(0),iClickSkip(1), sColorMainHome, 0, rTimeStep03, 0, iTimeOut3)
 If btmp = 0 Then
     Goto Refresh
-End If
-fTap(iClickSkip(0), iClickSkip(1), iRot, rScale)
-Delay 1000
-//checkExploreP
-'iPosMainExploreP = Array(790,669)
-If -1 <> fCmpColor(iPosMainExploreP(0), iPosMainExploreP(1), sColorMainExploreP, 1, iRot, rScale) then
-	ExplorePMax = 0
-	TracePrint "ExploreP UnMax"
-	//ShowMessage "ExploreP UnMax"
-Else 
-	ExplorePMax = 1
-	TracePrint "ExploreP Max"
-	ShowMessage "ExploreP Max"
 End If
 
 If sDesFlag = 0 Then 
@@ -389,18 +379,14 @@ End If
 // Check for batttle P
 btmp = bFlag(iRot, rScale, iPosMainBattleP(0), iPosMainBattleP(1), iClickSkip(0),iClickSkip(1), sColorMainBattleP, 0, rTimeStep2, 0, 1)
 If btmp = 0 Then 
-	TracePrint "Enter battle menu "
-	Goto EBM
 	Else
 	If sLevel > 0 Then 
-	TracePrint "No BattleP"
 	Goto NBP
 	End If
 End If 
 
-// Enter battle menu 
-Rem EBM
 TracePrint "Enter battle menu "
+// Enter battle menu 
 btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainBattle(0),iClickMainBattle(1), sColorMenuBattle, 0, rTimeStep2, 0, iTimeOut)
 If btmp = 0 Then 
     Goto  NBP
@@ -409,27 +395,22 @@ End If
 // Sure battleP
 btmp = bFlag(iRot, rScale, iPosMenuBattleP(0), iPosMenuBattleP(1), iClickNone(0),iClickNone(1), sColorMenuBattleP, 0, rTimeStep, 0, 2)
 If btmp = 0 Then 
-	Goto EBL
 	Else
     Goto  NBP
 End If
 
-// Enter battle listt
-TracePrint "Enter battle list"
-Rem EBL
+
+// Enter battle list
 fTap(iPosMainBattleP(0), iPosMainBattleP(1), iRot, rScale)
-Delay 500
+Delay 100
 
 // Last check for BattleP 
-TracePrint "Last check for BattleP" 
-btmp = bFlag(iRot, rScale, iPosMenuBattleP(0), iPosMenuBattleP(1), iClickNo(0), iClickNo(1), sColorMenuBattleP, 0, rTimeStep, 0, 3)
+btmp = bFlag(iRot, rScale, iPosMenuBattleP(0), iPosMenuBattleP(1), iClickNo(0), iClickNo(1), sColorMenuBattleP, 0, rTimeStep, 0, 10)
 If btmp = 0 Then 
-	Goto BattleList
 	Else
     Goto NBP	
 End If
-Rem BattleList
-TracePrint "BattleList"
+
 btmp = bFlag(iRot, rScale, iPosBattleList(0), iPosBattleList(1), iClickNo(0), iClickNo(1), sColorBattleList, 0, rTimeStep, 0, 10)
 If btmp = 0 Then 
     Goto Refresh	
@@ -466,7 +447,6 @@ If sLevel = 0 Then
 	Goto Wait
 End If
 //EnterSynergismeMenu
-TracePrint "EnterSynergismeMenu"
 btmp = bFlag(iRot, rScale, iPosMenuSynergisme(0), iPosMenuSynergisme(1), iClickMainSynergisme(0), iClickMainSynergisme(1), sColorMenuSynergisme, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then 
    	Goto Refresh	
@@ -476,31 +456,20 @@ End If
 TracePrint "CheckPutMode"
 Rem CPM
 RLcount = 0
-/*
 If iPutFlag = 0 Then 
 	Goto CRL
 End If
-*/
-//checkExplorePMax
-TracePrint "checkExplorePMax"
-If iPutFlag = 0 Then 
-	If ExplorePMax = 0 Then 
-	TracePrint "goCRL"
-	goto CRL
-	End If
-End If
-
 
 //CheckSynergismeP
 btmp = bFlag(iRot, rScale, iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
 If btmp = 0 Then 
 	NoSynergismeP = False
+//CheckiRedFlag
+If iRedFlag = 0 Then 
+Goto CRL
+End If
 	Else 
-	NoSynergismeP = True
-		//CheckiRedFlag
-		If iRedFlag = 0 Then 
-			Goto CRL
-		End If
+	NoSynergismeP =  True	
 End If
 
 //Checkbattling
@@ -511,12 +480,10 @@ If btmp = 0 Then
 Rem CSPMAX
 btmp = bFlag(iRot, rScale, iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
 	If btmp = 0 Then 
-		Goto CRF
 		Else
 		Goto CRL
 	End If
 	//CheckiRedFlag
-	Rem CRF
 		If iRedFlag = 0 Then 
 			Goto Fdoge
 			Else 
@@ -525,7 +492,12 @@ btmp = bFlag(iRot, rScale, iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1),
    	Else 
    		Goto SR
 End If
-
+//checkExplorePMax
+If iPutFlag = False Then 
+	If ExplorePMax = 0 Then 
+	goto CRL
+	End If
+End If
 //SeachReidooburi
 Rem SR
 btmp = bFlag(iRot, rScale, iPosMissionList(0), iPosMissionList(1), iClickReidooburiSeach(0), iClickReidooburiSeach(1), sColorMissionList, 0, rTimeStep, 0, iTimeOut)
@@ -662,8 +634,6 @@ End If
 Rem FullP
 TracePrint "FullPunch"
 fTap (iClick3PBattle(0), iClick3PBattle(1), iRot, rScale)
-Touch 0, 0, 1000
-Touch 0, 0, 1000
 Delay 1400
 If Helper = 1 Then 
 	fTap(iClickOnePBattle(0), iClickOnePBattle(1), iRot, rScale)
@@ -755,14 +725,12 @@ If -1 <> fCmpColor(iPosReidooburiHP(0), iPosReidooburiHP(1), sColorReidooburiHP,
 	End If
 	*/
 End If
-
 //sColorSynergismeList bequal=2
 btmp = bFlag(iRot, rScale, iPosSynergismeList(0), iPosSynergismeList(1), iClickNone(0), iClickNone(1), sColorSynergismeList, 0, rTimeStep05, 0, 5)
 TracePrint "sColorSynergismeList bequal=2"
 If btmp = 0 Then 
-//TracePrint "GOTO CSPM"
-//Goto CSPM	
-Goto CG
+TracePrint "GOTO CSPM"
+   	Goto CSPM	
 End If
 fTap(iClickSynergismeList(0), iClickSynergismeList(1), iRot, rScale)
 Delay 600
@@ -776,8 +744,7 @@ btmp = bFlag(iRot, rScale, iPosSimpleSynergisme(0), iPosSimpleSynergisme(1), iCl
 If btmp = 0 Then 
    	fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
 	Delay 1000
-	'Goto CSPM
-	Goto CG
+	Goto CSPM
 End If
 //ClickSimpleSynergisme
 fTap(iClickSimpleSynergisme(0), iClickSimpleSynergisme(1), iRot, rScale)
@@ -792,8 +759,7 @@ End If
 Goto CRL
 
 //3PLickOther
-//Rem CSPM
-/*
+Rem CSPM
 If iPutFlag = 1 Then 
 	Goto CG
 End If
@@ -805,12 +771,10 @@ End If
 //CheckSynergismePMAX
 btmp = bFlag(iRot, rScale, iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
 If btmp = 0 Then 
-	Goto ERL
 	Else
 	Goto CG
 End If
 //EnterRequireList
-Rem ERL
 fTap(iClickSynergismeList(0), iClickSynergismeList(1), iRot, rScale)
 Delay 600
 //CheckRequireListMenu
@@ -832,7 +796,7 @@ btmp = bFlag(iRot, rScale, iPosMenuSynergisme(0), iPosMenuSynergisme(1), iClickO
 If btmp = 0 Then 
    	Goto Refresh	
 End If
-*/
+
 
 //CheckGift
 Rem CG
@@ -860,11 +824,9 @@ Goto Refresh
 
 //Wait30s to 5min
 Rem Wait
-TracePrint "waiting"
 Retry = 1
 //Randomize
 //Delay int((Rnd * 10 * 6000 * Cycles + 10000))
-ShowMessage Cycles
 Delay Cycles*1000
 
 //Refresh

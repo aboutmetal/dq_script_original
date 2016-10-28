@@ -224,9 +224,9 @@ iPosGiftMenu = Array(20, 520)
 
 //Zero
 If ReadUIConfig("sReset ")=true then
-    sDesFlag = 1 
+    sReset = 1 
 	Else
-    sDesFlag = 0
+    sReset = 0
 End If
 tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)

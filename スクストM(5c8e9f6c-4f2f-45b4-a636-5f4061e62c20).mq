@@ -36,7 +36,7 @@ Dim sColorYes, sColorNo, sColorChoose, sColorOk
 Dim sColorMainSynergismeP, sColorMenuSynergisme, sColorMenuSynergismeP, sColorReidooburiSeach
 Dim sColorSynergismeList, sColorSynergismeGift, sColorMenuSynergismeListMenu, sColorSimpleSynergisme
 Dim sColorMissionList, sColorMissionContinue, sColorGiftMenu, sColorExploreHome, sColorNoExploreP
-Dim sColorReidooburiHP,iPosMainExploreP,ExplorePMax
+Dim sColorReidooburiHP,iPosMainExploreP,ExplorePMax,iPosExploreP,sColorExploreP
 
 Dim sReset,Retry, Cycles, RSAT,tRSAT,Helper,PunchPower,DogeMode
 Dim rTimeStep03, rTimeStep05, rTimeStep, rTimeStep2
@@ -495,7 +495,7 @@ End If
 //checkExplorePMax
 If iPutFlag = False Then 
 	If ExplorePMax = 0 Then 
-	CRL
+	goto CRL
 	End If
 End If
 //SeachReidooburi

@@ -859,8 +859,8 @@ Goto Refresh
 
 //Wait30s to 5min
 Rem Wait
-TracePrint "waiting"
 Retry = 1
+TracePrint "waiting"
 //Randomize
 //Delay int((Rnd * 10 * 6000 * Cycles + 10000))
 ShowMessage Cycles

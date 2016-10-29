@@ -45,6 +45,27 @@ Dim iPutFlag, iRedFlag, sLevel, sDesFlag
 Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
+/////////////////////////////////////////////////////
+// 2016/10/29 aboutmetal
+
+Log.Open 'Open log file
+
+// External libs
+Import "CmdAM.mql"
+Import "CmdSGS.mql"
+
+// Variables that function Taisen needs
+Dim imode, idebug, win_chance, posBattle(3)
+imode = 1
+idebug = 0
+win_chance = 0.95
+
+// Initialize libs
+btmp = CmdAM.Initial()
+btmp = CmdSGS.Initial()
+
+/////////////////////////////////////////////////////
+
 ExplorePMax=0
 isDoge = 0
 rScale = 1
@@ -335,8 +356,11 @@ End If
 
 TracePrint "Check if main menu"
 // Check if main menu
-btmp = bFlag(iRot, rScale, iPosStart(0), iPosStart(1), iClickNone(0), iClickNone(1), sColorStart, 0, rTimeStep, 0, 1)
-If btmp = 1 Then
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosStart(0), iPosStart(1), iClickNone(0), iClickNone(1), sColorStart, 0, rTimeStep, 0, 1)
+//If btmp = 1 Then
+If -1 <> CmdAM.fCmpColor(iPosStart(0), iPosStart(1), sColorStart, 1, iRot, rScale) Then
     fTap(iClickStart(0), iClickStart(1), iRot, rScale)
     Delay 50
     fTap(iClickStart(0), iClickStart(1), iRot, rScale)
@@ -385,15 +409,18 @@ If sDesFlag = 0 Then
 	Goto NBP
 End If
 
-// Check for batttle P
-btmp = bFlag(iRot, rScale, iPosMainBattleP(0), iPosMainBattleP(1), iClickSkip(0),iClickSkip(1), sColorMainBattleP, 0, rTimeStep2, 0, 1)
-If btmp = 0 Then 
+// Check for battle P
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosMainBattleP(0), iPosMainBattleP(1), iClickSkip(0),iClickSkip(1), sColorMainBattleP, 0, rTimeStep2, 0, 1)
+//If btmp = 0 Then 
+If -1 = CmdAM.fCmpColor(iPosMainBattleP(0), iPosMainBattleP(1), sColorMainBattleP, 1, iRot, rScale) Then 
 	TracePrint "Enter battle menu "
 	Goto EBM
-	Else
+Else
 	If sLevel > 0 Then 
-	TracePrint "No BattleP"
-	Goto NBP
+		TracePrint "No BattleP"
+		Goto NBP
 	End If
 End If 
 
@@ -434,15 +461,38 @@ If btmp = 0 Then
     Goto Refresh	
 End If
 
-// Choose last one and fight!
-fSwipe(706, 706, 706, 150, iRot, rScale)
-Delay 2000
-fTap(iPosMainBattleP(0), iPosMainBattleP(1), iRot, rScale)
+/////////////////////////////////////////////////////
+// 2016/10/29 aboutmetal
+
+If 0 = imode then
+	// Choose last one and fight!
+	fSwipe(706, 706, 706, 150, iRot, rScale)
+	Delay 2000
+	fTap(iPosMainBattleP(0), iPosMainBattleP(1), iRot, rScale)
+Else
+	// Function Taisen will return posBattle
+	// posBattle(0),(1) is the position, just click it
+	// posBattle(2) is the rank of your enemy
+	// posBattle(3) is whether if this enemy has event bonus
+	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, idebug, posBattle)
+	If btmp = 0 Then
+		Goto Refresh
+	ElseIf btmp = -1 Then
+		TracePrint "Taisen error"
+		EndScript
+	End If
+	fTap(posBattle(0), posBattle(1), iRot, rScale)
+End If
+
+/////////////////////////////////////////////////////
+
 Delay 200
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
 Delay 1300
 fTap(iClickNo(0), iClickNo(1), iRot, rScale)
 Delay 50
+
+	
 
 btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainHome(0),iClickMainHome(1), sColorMenuBattle, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then 
@@ -491,47 +541,55 @@ End If
 
 
 //CheckSynergismeP
-btmp = bFlag(iRot, rScale, iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
-If btmp = 0 Then 
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
+//If btmp = 0 Then 
+If -1 = CmdAM.fCmpColor(iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), sColorMenuSynergismeP, 1, iRot, rScale) Then
 	NoSynergismeP = False
-	Else 
+Else 
 	NoSynergismeP = True
-		//CheckiRedFlag
-		If iRedFlag = 0 Then 
-			Goto CRL
-		End If
+	//CheckiRedFlag
+	If iRedFlag = 0 Then 
+		Goto CRL
+	End If
 End If
 
 //Checkbattling
 btmp = bFlag(iRot, rScale, iPosReidooburiSeach (0), iPosReidooburiSeach (1), iClickNone(0), iClickNone(1), sColorReidooburiSeach, 0, rTimeStep, 0, 2)
 If btmp = 0 Then 
-
-//CheckSynergismePMAX
-Rem CSPMAX
-btmp = bFlag(iRot, rScale, iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
-	If btmp = 0 Then 
+	//CheckSynergismePMAX
+	Rem CSPMAX
+	// 2016/10/29 aboutmetal
+	// Replace bFlag by fCmpColor
+	//btmp = bFlag(iRot, rScale, iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
+	//If btmp = 0 Then
+	If -1 = CmdAM.fCmpColor(iPosMenuSynergismePMax(0), iPosMenuSynergismePMax(1), sColorMenuSynergismeP, 1, iRot, rScale) Then
 		Goto CRF
-		Else
+	Else
 		Goto CRL
 	End If
 	//CheckiRedFlag
 	Rem CRF
-		If iRedFlag = 0 Then 
-			Goto Fdoge
-			Else 
-			Goto CRL
-		End If
-   	Else 
-   		Goto SR
+	If iRedFlag = 0 Then 
+		Goto Fdoge
+	Else 
+		Goto CRL
+	End If
+Else 
+   	Goto SR
 End If
 
 //SeachReidooburi
 Rem SR
 btmp = bFlag(iRot, rScale, iPosMissionList(0), iPosMissionList(1), iClickReidooburiSeach(0), iClickReidooburiSeach(1), sColorMissionList, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then 
-btmp = bFlag(iRot, rScale, iPosMissionContinue(0), iPosMissionContinue(1), iClickReidooburiSeach(0), iClickReidooburiSeach(1), sColorMissionContinue, 0, rTimeStep, 0, 1)
-If btmp = 0 Then 
-   	Goto Refresh	
+	// 2016/10/29 aboutmetal
+	// Replace bFlag by fCmpColor
+	//btmp = bFlag(iRot, rScale, iPosMissionContinue(0), iPosMissionContinue(1), iClickReidooburiSeach(0), iClickReidooburiSeach(1), sColorMissionContinue, 0, rTimeStep, 0, 1)
+	//If btmp = 0 Then 
+	If -1 = CmdAM.fCmpColor(iPosMissionContinue(0), iPosMissionContinue(1), sColorMissionContinue, 1, iRot, rScale) Then
+   		Goto Refresh	
 	End If
 End If
 fTap(iPosMissionList(0), iPosMissionList(1), iRot, rScale)
@@ -637,13 +695,14 @@ Rem fight
 fTap iClickOnePBattle(0), iClickOnePBattle(1), iRot, rScale
 Delay 1000
 //CheckSynergismeP
-btmp = bFlag(iRot, rScale, iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
-If btmp = 0 Then 
-
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), iClickNone(0), iClickNone(1), sColorMenuSynergismeP, 0, rTimeStep, 0, 1)
+//If btmp = 0 Then 
+If -1 = CmdAM.fCmpColor(iPosMenuSynergismeP(0), iPosMenuSynergismeP(1), sColorMenuSynergismeP, 1, iRot, rScale) Then
 	NoSynergismeP = False
-	Else 
+Else 
 	NoSynergismeP = True
-	
 End If
 
 //CheckIsDoge
@@ -771,8 +830,11 @@ If btmp = 0 Then
    	Goto Refresh	
 End If
 //CheckSimpleRequire
-btmp = bFlag(iRot, rScale, iPosSimpleSynergisme(0), iPosSimpleSynergisme(1), iClickNone(0), iClickNone(1), sColorSimpleSynergisme, 0, rTimeStep, 0, 1)
-If btmp = 0 Then 
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosSimpleSynergisme(0), iPosSimpleSynergisme(1), iClickNone(0), iClickNone(1), sColorSimpleSynergisme, 0, rTimeStep, 0, 1)
+//If btmp = 0 Then 
+If -1 = CmdAM.fCmpColor(iPosSimpleSynergisme(0), iPosSimpleSynergisme(1), sColorSimpleSynergisme, 1, iRot, rScale) Then
    	fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
 	Delay 1000
 	'Goto CSPM
@@ -835,8 +897,11 @@ End If
 
 //CheckGift
 Rem CG
-btmp = bFlag(iRot, rScale, iPosSynergismeGift(0), iPosSynergismeGift(1), iClickNone (0), iClickNone (1),sColorSynergismeGift, 0, rTimeStep, 0, 1)
-If btmp = 0 Then 
+// 2016/10/29 aboutmetal
+// Replace bFlag by fCmpColor
+//btmp = bFlag(iRot, rScale, iPosSynergismeGift(0), iPosSynergismeGift(1), iClickNone (0), iClickNone (1),sColorSynergismeGift, 0, rTimeStep, 0, 1)
+//If btmp = 0 Then 
+If -1 = CmdAM.fCmpColor(iPosSynergismeGift(0), iPosSynergismeGift(1), sColorSynergismeGift, 1, iRot, rScale) Then
    	Goto Wait	
 End If
 
@@ -863,8 +928,17 @@ Retry = 1
 TracePrint "waiting"
 //Randomize
 //Delay int((Rnd * 10 * 6000 * Cycles + 10000))
-ShowMessage Cycles
-Delay Cycles*1000
+
+/////////////////////////////////////////////////////
+// 2016/10/29 aboutmetal
+// Show the time remained by a countdown at right-bottom corner
+
+//ShowMessage Cycles
+//Delay Cycles*1000
+
+CmdAM.CountDown(Cycles, 2000, 2000, iRot, rScale)
+
+/////////////////////////////////////////////////////
 
 //Refresh
 TracePrint "Refresh"

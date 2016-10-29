@@ -1,0 +1,245 @@
+Function Initial()
+	
+	Randomize
+	Traceprint "CmdAM Lib initialization"
+	Initial = 1
+	
+End Function
+
+Function coord_trans(x, y, txy, rotate, scale)
+
+	Select case rotate
+	Case 1
+		txy(0) = Cint(x * scale)
+		txy(1) = Cint(y * scale)
+		coord_trans = 1
+	Case 0
+		txy(1) = Cint(x * scale)
+		txy(0) = Cint((720 - y) * scale)
+		coord_trans = 1
+	Case Else
+		TracePrint "rotate error", x, y, rotate, scale
+		coord_trans = 0
+	End Select
+
+End Function
+
+Function showmsg(string, time, x, y, rotate, scale)
+
+	Dim txy(1)
+	If 0 = coord_trans(x, y, txy, rotate, scale)
+		showmsg = 0
+	Else
+		ShowMessage string, time, txy(0), txy(1)
+		showmsg = 1
+	End If
+
+End Function
+
+Function bFlag(rotate, scale, x, y, cx, cy, color, bequal, rtime, itime, ntime)
+
+// check if color(x,y).bequal.color, if not, click cx,cy once, wait rtime
+// Do until color(x,y).bequal.color or times gt ntime
+// if color is found, return 1, else if time out, return 0, else return -1
+
+	Dim itmp
+	
+	bFlag = 0
+	
+	Do While itime < ntime
+		itmp = fCmpColor(x, y, color, 1, rotate, scale)
+		If -2 = itmp Then
+			bFlag = -1
+			Exit Do
+		Else
+			If 0 = bequal and -1 < itmp Then 
+				bFlag = 1
+				Exit Do
+			ElseIf 1 = bequal and -1 = itmp Then 
+				bFlag = 1
+				Exit Do
+			End If
+		End If
+		If 0 = fTap(cx, cy, rotate, scale) Then
+			bFlag = -1
+			Exit Do
+		Else
+			Delay rtime * 1000
+			itime = itime + 1
+		End If
+	Loop
+	
+End Function
+
+Function bFlag_mult(rtt, scl, color_pos, click, color, bequal, rtime, ntime)
+	
+	// bFlag函数的复数版
+	// color_pos，color和bequal均为数组，且第一维长度必须相同
+	// click可以包括很多点，也可以只包括单点
+	// 具体操作为：
+	// 假设输入的color_pos第一维长度为n，即包含n个坐标，则color和bequal长度也必须为n
+	// 1. 从1到n，先判断 color_pos(i,0), color_pos(i,1)这个坐标处颜色是否 等于/不等于(由bequal(i)控制) color(i)
+	// 2. 若对于全部i，颜色判断均符合，则返回1，退出函数
+	// 3. 若不全符合，则按顺序，每隔rtime时间，点击click数组里存储的点，每点击一个点，重新判断所有颜色
+	// 4. 若click数组里存储的全部点都点击完毕，颜色依然不全符合，则itime自增1，从第一步循环
+	// 5. 当itime > ntime时，函数返回0，退出函数
+	// 若函数返回-1则是输入出错
+	
+	Dim nclick, ncolor_pos, ncolor, nbequal
+	Dim iclick, icolor
+	Dim isuc, itime
+	Dim itmp
+	
+	nclick = UBOUND(click)
+	ncolor_pos = UBOUND(color_pos)
+	ncolor = UBOUND(color)
+	nbequal = UBOUND(bequal)
+	
+	bFlag_mult = 0
+	
+	If ncolor_pos <> ncolor or ncolor <> nbequal Then 
+		bFlag_mult = -1
+		Goto bFlag_mult_end
+	End If
+	
+	itime = 1
+	
+	Do While itime <= ntime
+	
+		For iclick = 0 To nclick
+		
+			isuc = 1
+			
+			For icolor = 0 To ncolor
+				itmp = fCmpColor(color_pos(icolor, 0), color_pos(icolor, 1), _
+					             color(icolor), 1, rtt, scl)
+				If -2 = itmp then
+					bFlag_mult = -1
+					Goto bFlag_mult_end
+				Else
+					If 0 = bequal(icolor) and -1 = itmp Then 
+							isuc = 0
+					ElseIf 1 = bequal(icolor) and -1 < itmp Then 
+							isuc = 0
+					End If
+				End If
+			Next
+			
+			If 1 = isuc Then 
+				bFlag_mult = 1
+				Goto bFlag_mult_end
+			Else 
+				If 0 = fTap(click(iclick, 0), click(iclick, 1), rtt, scl) then
+					bFlag_mult = -1
+					Goto bFlag_mult_end
+				Else	
+					Delay rtime * 1000
+				End If
+			End If
+			
+		Next
+		
+		If 1 = isuc Then 
+			bFlag_mult = 1
+			Goto bFlag_mult_end
+		End If
+	
+		itime = itime + 1
+		
+	Loop
+	
+	If itime > ntime Then 
+		bFlag_mult = 0
+	End If
+	
+	Rem bFlag_mult_end
+	
+End Function
+
+Function CountDown(n, x, y, rotate, scale)
+	
+	Dim i
+	CountDown = 1
+	For i = 1 To n
+		Delay 1000
+		If 0 = showmsg("下次检查 " & _
+						Cstr(Int((n-i)/60)) & ":" & Cstr((n-i) Mod 60), _
+						3000, x, y, rotate, scale)
+			CountDown = 0
+			Exit For
+		End If
+	Next
+	
+End Function
+
+Function SStoFile(filename, x1, y1, x2, y2, rotate, scale)
+	
+	Dim stringTmp, filename_tmp
+	Dim i
+	Dim txy1(1), txy2(1)
+	
+	stringTmp = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	
+	If 0 = coord_trans(x1, y1, txy1, rotate, scale) Then
+		SStoFile = 0
+		Goto SStoFile_End
+	Elseif 0 = coord_trans(x2, y2, txy2, rotate, scale) Then
+		SStoFile = 0
+		Goto SStoFile_End
+	End If
+	
+	Do While 1 = 1
+		filename_tmp = filename
+		For i = 1 To 8
+			filename_tmp = filename_tmp & UTF8.StrGetAt(stringTmp, 1 + Int(Rnd() * 36))
+		Next
+		filename_tmp = GetTempDir() & filename_tmp & ".png"
+		If 1 <> Dir.Exist(filename_tmp) Then 
+			Exit Do
+		End If
+	Loop
+	
+	SnapShot filename_tmp, txy1(0), txy1(1), txy2(0), txy2(1)
+	
+	SStoFile = 1
+	
+	Rem SStoFile_End
+	
+End Function
+
+Function fTap(x, y, rotate, scale)
+
+	Dim txy(1)
+	If 0 = coord_trans(x, y, txy, rotate, scale) Then
+		fTap = 0
+	Else
+		Tap txy(0), txy(1)
+		fTap = 1
+	End If
+
+End Function
+
+Function fSwipe(x1, y1, x2, y2, rotate, scale)
+
+	Dim txy1(1), txy2(1)
+	If 0 = coord_trans(x1, y1, txy1, rotate, scale) Then
+		fSwipe = 0
+	Elseif 0 = coord_trans(x2, y2, txy2, rotate, scale) Then
+		fSwipe = 0
+	Else
+		Swipe txy1(0), txy1(1), txy2(0), txy2(1)
+		fSwipe = 1
+	End If
+
+End Function
+
+Function fCmpColor(x, y, scolor, bequal, rotate, scale)
+	
+	Dim txy(1)
+	If 0 = coord_trans(x, y, txy, rotate, scale) Then
+		fCmpColor = -2
+	Else
+		fCmpColor = CmpColor(txy(0), txy(1), scolor, bequal)
+	End If
+	
+End Function

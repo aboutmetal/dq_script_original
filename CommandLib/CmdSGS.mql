@@ -1,0 +1,614 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//			对战战力自动识别 ver.1.1.0
+//
+//			需要外部命令库 CmdAM.mql, OCRAM.mql
+//
+//			输入：imode, iRot, rScale, win_chance, idebug, posBattle
+//			输出：posBattle
+//
+//			这是啥玩意儿？
+//			--> 在对战列表界面，自动读取己方和敌方的战力，HP和对战等级，计算战斗获胜概率
+//				然后将需要点击的位置以及敌人等级利用输入参数返回给上一层
+//
+//			这东西怎么用？
+//			--> 1. 此函数只负责处理对战列表，所以首先你要有一个能自动进入对战列表界面的脚本
+//			--> 2. 在你脚本的附件中加入
+//					SGS_NUM_DICT.txt, SGS_CHA_DICT.txt
+//					两个文件
+//			--> 3. 在你脚本的开头，使用
+//					Import "CmdSGS.mql"
+//					然后加入以下六个变量
+//					imode:		输入，对战模式，0为打最后一个，1为智能识别
+//					iRot:       输入，屏幕旋转方向（之前定义过可以直接用，是一样的）
+//					rScale:     输入，屏幕缩放比例，现在仅支持1280x720，即rScale = 1
+//					win_chance: 输入，胜利概率阈值（取值0~1），胜率低于这个的仗不打
+//					idebug:     输入，0没影响，1为开启debug模式，此时只返回结果，不打
+//					posBattle:	输出数组
+//								(0)和(1)是下一步需要点击的位置（对战敌人的坐标）
+//								(2)是敌人等级（字符串）
+//								(3)是否有活动分数加成
+//			--> 4. 在你脚本变量声明完毕后，循环开始之前，调用CmdSGS.Initial()
+//					返回值 = CmdSGS.Initial()
+//			--> 5. 在你脚本进入对战界面后（即看到那六个对手了），调用
+//					返回值 = CmdSGS.TaiSen(imode, iRot, rScale, win_chance, idebug, posBattle)
+//			--> 6. 此函数执行完成后会将需要点击的位置赋给posBattle(0)和(1)
+//
+//			出错的情况：
+//			--> posBattle的返回值: 若返回值为0,0,"N",0，则表明找不到能打赢的对手
+//			--> Taisen函数的返回值：
+//					 1: 成功执行，没有报错
+//					 0: 未能成功读取某些数值，要求刷新
+//					-1: 报错，无法继续执行
+//
+//			其他杂七杂八的东西：
+//			--> win_chance推荐 > 0.9
+//				对战胜率的计算实际上是计算等效Combo数目的概率
+//				等效Combo数为Combo数乘以暴击率，然后假定其符合泊松分布
+//				所以如果角色有+combo或者+暴击的技能，那就算不准
+//				话说本来就是粗略计算，能算太准就怪了
+//			--> 对战等级如果识别不了，脚本会截图保存
+//				回头可以看看是不是刷到Ultimate的julao了
+//			--> 如果ATK或者HP识别出来小于6位数，则脚本也会截图保存
+//				可以检查一下到底是真的没有6位数，还是字库读取失败
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////
+Import "CmdAM.mql"
+Import "OCRAM.mql"
+
+Function Initial()
+	
+	SetDictEX(0, "Attachment:SGS_NUM_DICT.txt")
+	SetDictEX(1, "Attachment:SGS_CHA_DICT.txt")
+	SetRowsNumber (33)
+	Traceprint "CmdSGS Lib initialization"
+	Initial = 1
+	
+End Function
+
+Function TaiSen(imode, iRot, rScale, win_chance, idebug, posBattle)
+
+Dim rTimeStep
+Dim i, j, itmp
+Dim ifind, iline
+Dim sResult, strOutput
+
+Dim uHP, uATK, uRank, uLamda
+Dim HP(5), ATK(5), Rank(5), ievent(5), Lamda(5), chance_to_win(5)
+Dim tmpATK, tmpScore, tmpChance
+
+Dim OCR_thre_ATK, OCR_thre_HP, OCR_thre_CHA
+Dim rect_u_ATK(3), rect_u_HP(3), rect_u_Cha(3)
+Dim rect_ATK(3,5), rect_HP(3,5), rect_Cha(3,5), disOCR(3)
+Dim coWhite, coBlack, coDarkRed, coOrange
+
+Dim tick, tick2, errlog
+
+//////////////////////////////////////////////////////////////
+
+rTimeStep = 1
+
+//////////////////////////////////////////////////////////////
+
+// 若imode == 0，则直接打最后一个
+
+If 0 = imode Then
+	errlog = "打最后一个"
+	CmdAM.showmsg(errlog, 3000, 2000, 2000, iRot, rScale)
+	Traceprint errlog
+	CmdAM.fSwipe(706, 706, 706, 150, iRot, rScale)
+	Delay rTimeStep * 1000
+	posBattle(0) = 600
+	posBattle(1) = 620
+	posBattle(2) = "SSS"
+	posBattle(3) = 1
+	TaiSen = 1
+	Goto TaiSen_End
+End If
+
+//////////////////////////////////////////////////////////////
+
+OCR_thre_ATK = 0.9
+OCR_thre_HP = 0.9
+OCR_thre_CHA = 0.8
+
+// 对战列表里战力数值的显示范围，rect_HP为HP，rect_ATK为战力值，rect_Cha为F-SSS
+// 仅对应1280x720！！！
+//自己的：
+rect_u_Cha(0) = 588 // 左端x坐标
+rect_u_Cha(1) = 7 // 上沿y坐标
+rect_u_Cha(2) = 632+40 // 右端x坐标
+rect_u_Cha(3) = 52 // 下沿y坐标
+
+rect_u_HP(0) = 191 // 左端x坐标
+rect_u_HP(1) = 53 // 上沿y坐标
+rect_u_HP(2) = 351 // 右端x坐标
+rect_u_HP(3) = 87 // 下沿y坐标
+
+rect_u_ATK(0) = 418 // 左端x坐标
+rect_u_ATK(1) = 53 // 上沿y坐标
+rect_u_ATK(2) = 578 // 右端x坐标
+rect_u_ATK(3) = 87 // 下沿y坐标
+
+// 第一个人：
+rect_Cha(0, 0) = 627//+90 // 左端x坐标
+rect_Cha(1, 0) = 125 // 上沿y坐标
+rect_Cha(2, 0) = 670+40//+90 // 右端x坐标
+rect_Cha(3, 0) = 170 // 下沿y坐标
+
+rect_HP(0, 0) = 330 // 左端x坐标
+rect_HP(1, 0) = 171 // 上沿y坐标
+rect_HP(2, 0) = 490 // 右端x坐标
+rect_HP(3, 0) = 208 // 下沿y坐标
+
+rect_ATK(0, 0) = 555 // 左端x坐标
+rect_ATK(1, 0) = 171 // 上沿y坐标
+rect_ATK(2, 0) = 715 // 右端x坐标
+rect_ATK(3, 0) = 208 // 下沿y坐标
+
+// 滚屏后的第五个人：
+rect_Cha(0, 4) = 627//+90 // 左端x坐标
+rect_Cha(1, 4) = 429 // 上沿y坐标
+rect_Cha(2, 4) = 670+40//+90 // 右端x坐标
+rect_Cha(3, 4) = 474 // 下沿y坐标
+
+rect_HP(0, 4) = 330 // 左端x坐标
+rect_HP(1, 4) = 475 // 上沿y坐标
+rect_HP(2, 4) = 490 // 右端x坐标
+rect_HP(3, 4) = 512 // 下沿y坐标
+
+rect_ATK(0, 4) = 555 // 左端x坐标
+rect_ATK(1, 4) = 475 // 上沿y坐标
+rect_ATK(2, 4) = 715 // 右端x坐标
+rect_ATK(3, 4) = 512 // 下沿y坐标
+
+// 对战列表里各人战力数值相距距离
+// 仅对应1280x720！！！
+disOCR(0) = 0
+disOCR(1) = 143
+disOCR(2) = 0
+disOCR(3) = 143
+
+// 识别色：白色
+coWhite = "FFFFFF-0F0F0F"
+// 识别色：黑色
+coBlack = "000000-7F7F7F"
+// 背景色：酒红色
+coDarkRed = "643EBB-0F0F0F"
+//按钮背景色：橙色
+coOrange = "3B8CF5-090909"
+
+//////////////////////////////////////////////////////////////
+
+// 生成需要进行文字识别的位置
+// 不写成静态是为了对应Fever时间
+
+If -1 = CmdAM.fCmpColor(rect_Cha(0, 0), rect_Cha(1, 0), _
+						coOrange, 1, iRot, rScale) and _
+   -1 = CmdAM.fCmpColor(rect_Cha(0, 0), rect_Cha(1, 0), _
+						coDarkRed, 1, iRot, rScale) Then 
+// 本来应该是第一个对手的位置，其颜色却不是橘黄或酒红，说明进入了fever time
+// fever time时自身的HP和ATK数据会多出一行用于显示4倍伤害，所以全部的识别区都要下移一行
+	strOutput = "Fever!!"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	rect_u_HP(0) = rect_u_HP(0) + 5
+	rect_u_HP(2) = rect_u_HP(2) + 5
+	rect_u_ATK(0) = rect_u_ATK(0) + 66
+	rect_u_ATK(2) = rect_u_ATK(2) + 66
+	rect_Cha(1, 0) = rect_Cha(1, 0) + 22
+	rect_Cha(3, 0) = rect_Cha(3, 0) + 22
+	rect_ATK(1, 0) = rect_ATK(1, 0) + 22
+	rect_ATK(3, 0) = rect_ATK(3, 0) + 22
+	rect_HP(1, 0) = rect_HP(1, 0) + 22
+	rect_HP(3, 0) = rect_HP(3, 0) + 22
+Else 
+	strOutput = "Normal"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+End If
+
+For i = 1 to 3
+	For j = 0 To 3
+		rect_Cha(j, i) = rect_Cha(j, 0) + i * disOCR(j)
+		rect_ATK(j, i) = rect_ATK(j, 0) + i * disOCR(j)
+		rect_HP(j, i) = rect_HP(j, 0) + i * disOCR(j)
+	Next
+Next
+
+For j = 0 to 3
+	rect_Cha(j, 5) = rect_Cha(j, 4) + disOCR(j)
+	rect_ATK(j, 5) = rect_ATK(j, 4) + disOCR(j)
+	rect_HP(j, 5) = rect_HP(j, 4) + disOCR(j)
+Next
+
+//////////////////////////////////////////////////////////////
+
+// 将截图保存在内存中，稍微加快识别速度
+KeepCapture
+
+//////////////////////////////////////////////////////////////
+
+// 读自己的数值
+strOutput = strOutput & "\n" & "胜率设定: " & CStr(win_chance)
+CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+
+If idebug = 1 Then
+	tick = TickCount()
+End If
+
+UseDict (0)
+
+sResult = OCRAM.digit(rect_u_HP(0), rect_u_HP(1), rect_u_HP(2), rect_u_HP(3), _
+					  coWhite, iRot, rScale)
+uHP = CInt(sResult)
+strOutput = strOutput & "\n" & "HP:" & CStr(Int(uHP/10000)) & "W"
+CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+
+sResult = OCRAM.digit(rect_u_ATK(0), rect_u_ATK(1), rect_u_ATK(2), rect_u_ATK(3), _
+					  coWhite, iRot, rScale)
+uATK = CInt(sResult)
+strOutput = strOutput & ",ATK:"& CStr(Int(uATK/10000)) & "W"
+CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+
+UseDict(1)
+uRank = OCRAM.rank(rect_u_Cha(0), rect_u_Cha(1), rect_u_Cha(2), rect_u_Cha(3), _
+				   iRot, rScale)
+uLamda = fLamda(uRank)
+// fLamda返回的是combo数的期望值
+strOutput = strOutput & ",Rank:" & uRank
+CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+
+If idebug = 1 Then
+	tick2 = TickCount()
+	Traceprint tick2 - tick
+End If
+
+If uHP = 0 or uATK = 0 Then
+	errlog = "找不到自己的数值"
+	CmdAM.showmsg(errlog, 3000, 2000, 2000, iRot, rScale)
+	Traceprint errlog
+	TaiSen = 0 
+	ReleaseCapture
+	Goto TaiSen_End
+End If
+
+If idebug = 1 Then
+	Traceprint "你的HP, ATK, Rank, Combo数期望值： ", _
+			   uHP, uATK, uRank, uLamda
+End If
+
+//////////////////////////////////////////////////////////////
+
+ifind = -1
+
+// 首先判断前四个战力值，然后滑动屏幕到低端，判断最后两个
+
+For iline = 0 To 5
+
+	If iline = 4 Then
+		// 滑动屏幕后要重新截图放入内存
+		ReleaseCapture
+		CmdAM.fSwipe(706, 706, 706, 150, iRot, rScale)
+		Delay rTimeStep * 3000 'Wait longer to avoid messages covering UI
+		KeepCapture
+	End If
+
+	If idebug = 1 Then
+		tick = TickCount()
+	End If
+	
+	UseDict (0)
+	sResult = OCRAM.digit(rect_HP(0, iline), rect_HP(1, iline), _
+	            		  rect_HP(2, iline), rect_HP(3, iline), coWhite, iRot, rScale)
+	HP(iline) = CInt(sResult)
+	strOutput = strOutput & "\n" & "敌方HP:" & CStr(Int(HP(iline)/10000)) & "W"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	
+	If HP(iline) < 100000 Then
+		// 若读取的位数不对，截图保存至文件
+		itmp = CmdAM.SStoFile("error_HP_", _
+							  rect_HP(0, iline), rect_HP(1, iline), _
+							  rect_HP(2, iline), rect_HP(3, iline), iRot, rScale)
+	End If
+	
+	sResult = OCRAM.digit(rect_ATK(0, iline), rect_ATK(1, iline), _
+	            		  rect_ATK(2, iline), rect_ATK(3, iline), coWhite, iRot, rScale)
+	ATK(iline) = CInt(sResult)
+	strOutput = strOutput & ",ATK:" & CStr(Int(ATK(iline)/10000)) & "W"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	
+	If ATK(iline) < 100000 Then
+		// 若读取的位数不对，截图保存至文件
+		itmp = CmdAM.SStoFile("error_ATK_", _
+							  rect_ATK(0, iline), rect_ATK(1, iline), _
+							  rect_ATK(2, iline), rect_ATK(3, iline), iRot, rScale)
+	End If
+	
+	UseDict(1)
+	Rank(iline) = OCRAM.rank(rect_Cha(0, iline), rect_Cha(1, iline), _
+	                		 rect_Cha(2, iline), rect_Cha(3, iline), iRot, rScale)
+	strOutput = strOutput & ",Rank:" & Rank(iline)
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	
+	If Rank(iline) = "" Then
+		If iline <> 5 Then
+		// 若无法读取等级，截图保存至文件
+			itmp = CmdAM.SStoFile("error_RANK_", _
+								  rect_Cha(0, iline), rect_Cha(1, iline), _
+								  rect_Cha(2, iline), rect_Cha(3, iline), iRot, rScale)
+		End If
+		Rank(iline) = "0"
+	End If
+	
+	If -1 <> CmdAM.fCmpColor(rect_Cha(0, iline), rect_Cha(1, iline), _
+							 coDarkRed, 1, iRot, rScale) Then 
+		ievent(iline) = 1
+		strOutput = strOutput & "(+)"
+		CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	Else 
+		ievent(iline) = 0
+	End If	
+	
+	If HP(iline) = 0 or ATK(iline) = 0 Then
+		errlog = "找不到敌方信息"
+		CmdAM.showmsg(errlog, 3000, 2000, 2000, iRot, rScale)
+		Traceprint errlog
+		TaiSen = 0 
+		ReleaseCapture
+		Goto TaiSen_End
+	End If
+	
+	If idebug = 1 Then
+		tick2 = TickCount()
+		Traceprint tick2 - tick
+	End If
+	
+	If idebug = 1 Then
+		tick = TickCount()
+	End If
+	
+	Lamda(iline) = fLamda(Rank(iline))
+	chance_to_win(iline) = fVictory(uATK, uLamda, uHP, ATK(iline), _
+									Lamda(iline), HP(iline))
+	
+	If idebug = 1 Then
+		tick2 = TickCount()
+		Traceprint tick2 - tick
+	End If
+	
+	//If idebug = 1 Then
+		Traceprint "第",iline+1,"个敌方的HP, ATK, Rank： ", _
+		           HP(iline), ATK(iline), Rank(iline), Lamda(iline)
+		Traceprint "获胜概率： ", chance_to_win(iline)
+	//End If
+	
+	Delay 100
+
+Next
+
+//////////////////////////////////////////////////////////////
+
+// 释放截图
+ReleaseCapture
+
+//////////////////////////////////////////////////////////////
+
+// 决定打哪个：
+// 首先判断成功率 > 要求成功率
+// 然后找对战等级最高的
+// 对战等级相同则选成功率最高的
+// 对战等级和成功率都相同则选atk最低的
+
+itmp = -1
+tmpATK = 10000000
+tmpScore = -1
+tmpChance = -1
+
+For iline = 0 To 5
+
+	If chance_to_win(iline) > win_chance Then 
+		If fScore(Rank(iline), ievent(iline)) > tmpScore Then
+			itmp = iline
+		ElseIf fScore(Rank(iline), ievent(iline)) = tmpScore Then
+			If chance_to_win(iline) > tmpChance Then
+				itmp = iline
+			ElseIf chance_to_win(iline) = tmpChance Then
+				If ATK(iline) < tmpATK Then
+					itmp = iline
+				End if
+			End if
+		End if
+	End If
+	
+	If itmp <> -1 Then
+		tmpATK = ATK(itmp)
+		tmpScore = fScore(Rank(itmp), ievent(itmp))
+		tmpChance = chance_to_win(itmp)
+		ifind = itmp
+	End if
+	
+Next
+	
+// 若选中的敌人在前四个中，则滑动屏幕到上端
+If ifind <= 3 Then 
+	CmdAM.fSwipe(706, 150, 706, 706, iRot, rScale)
+	Delay rTimeStep * 1000
+End If
+
+If ifind = -1 then
+// 若没有可打的人，返回坐标0,0，等级"N"
+	posBattle(0) = 0
+	posBattle(1) = 0
+	posBattle(2) = "N"
+	posBattle(3) = 0
+	strOutput = strOutput & "\n" & "都打不动"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+Else
+	posBattle(0) = rect_ATK(0, ifind)
+	posBattle(1) = rect_ATK(1, ifind)
+	posBattle(2) = Rank(ifind)
+	posBattle(3) = ievent(ifind)
+	strOutput = strOutput & "\n" & "打第" & CStr(ifind+1) & "个"
+	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
+	// 截图保存至文件
+	//itmp = CmdAM.SStoFile("OCR_", _
+	//					  rect_Cha(0, ifind)-620, rect_Cha(1, ifind)-5, _
+	//					  rect_Cha(2, ifind)+60, rect_Cha(3, ifind)+80, iRot, rScale)
+End If
+
+If idebug = 1 Then
+	Traceprint "敌人序号：",ifind+1
+	EndScript
+End if
+
+TaiSen = 1
+
+Rem TaiSen_End
+
+If idebug = 1 Then
+	EndScript
+End If
+////////////////////////////////////////////////////////////////////////////////////////////
+
+End Function
+
+Function fLamda(rank)
+
+	Dim icombo
+	Select Case rank
+		Case "0"
+			icombo = 5
+		Case "F"
+			icombo = 10
+		Case "E"
+			icombo = 15
+		Case "D"
+			icombo = 20
+		Case "C"
+			icombo = 25
+		Case "B"
+			icombo = 30
+		Case "A"
+			icombo = 35
+		Case "S"
+			icombo = 40
+		Case "SS"
+			icombo = 50
+		Case "SSS"
+			icombo = 55
+		Case Else
+			icombo = 5
+	End Select
+	fLamda = (1 + (1 + 0.15) / 10) * (1 + icombo / 100) * _
+			 (1 + 0.5 * 10 / 100) * (icombo * 0.0012 + 1.008) - 1
+	// 等效combo数期望值 = （1 + 支援队伍期望值） * combo期望值 * 暴击期望值 * 修正系数 - 1
+	// (1 + 0.15) / 10:    支援队伍的粗略计算，这里假设支援队伍atk为主队1/10，且第二人参战概率为15%，敌我相同
+	// 1 + icombo / 100:   combo数的期望值，单纯通过rank计算，没有考虑角色本身技能
+	// 1 + 0.5 * 10 / 100: 暴击期望值，暴击为1.5倍伤害，基础暴率为10%，没有考虑角色本身技能
+	// (icombo * 0.0012 + 1.008): 修正系数, 为近似值，实际情况下泊松分布并不精确，且rank越低，或回合数越少，则误差越大
+
+End Function
+
+Function fScore(rank, ievent)
+	
+	Dim itmp
+	Select Case rank
+		Case "0"
+			itmp = 33 + ievent * 4
+		Case "F"
+			itmp = 33 + ievent * 4
+		Case "E"
+			itmp = 34 + ievent * 5
+		Case "D"
+			itmp = 35 + ievent * 5
+		Case "C"
+			itmp = 37 + ievent * 5
+		Case "B"
+			itmp = 39 + ievent * 5
+		Case "A"
+			itmp = 42 + ievent * 6
+		Case "S"
+			itmp = 44 + ievent * 6
+		Case "SS"
+			itmp = 46 + ievent * 6
+		Case "SSS"
+			itmp = 48 + ievent * 7
+		Case Else
+			itmp = 33 + ievent * 4
+	End Select
+	fScore = itmp
+	
+End Function
+
+Function fVictory(u_atk, u_lamda, u_hp, e_atk, e_lamda, e_hp)
+
+	Dim nu, ne, k, e_P, u_P, iround
+	Dim round_P, totP
+	
+	totP = 0
+	round_P = 1
+	
+	// 你第iround回合打死敌人的概率, 及敌人第iround回合打死你的概率
+	// iround = 1 to 5
+	// round_P为战斗能够持续到iround回合的概率，初始为1
+	For iround = 1 to 5
+	
+		nu = Int(e_hp * 5 / u_atk) - iround
+		u_P = 0
+		For k = 0 to nu
+			u_P = u_P + (u_lamda * iround) ^ k / fact(k)
+		Next
+		u_P = u_P * (1/2.718281828) ^ (u_lamda * iround)
+		u_P = 1 - u_P
+		// 修正一些误差
+		If abs(u_P - 1) <= 0.0001 or u_P > 1 Then
+			u_P = 1	
+		ElseIf abs(u_P) <= 0.0001 or u_P < 0 Then
+			u_P = 0
+		End If
+		//TracePrint "你",iround,"回合打死敌人：", nu + 1, u_P
+		
+		// 你打死了敌人（u_P）则胜利，将这一概率乘以round_P，然后累加到获胜概率中
+		totP = totP + round_P * u_P
+	
+		ne = Int(u_hp * 5 / e_atk) - iround
+		e_P = 0
+		For k = 0 to ne
+			e_P = e_P + (e_lamda * iround) ^ k / fact(k)
+		Next
+		e_P = e_P * (1/2.718281828) ^ (e_lamda * iround)
+		e_P = 1 - e_P
+		// 修正一些误差
+		If abs(e_P - 1) <= 0.0001 or e_P > 1 Then
+			e_P = 1
+		ElseIf abs(e_P) <= 0.0001 or e_P < 0 Then
+			e_P = 0
+		End If
+		//TracePrint "敌人",iround,"回合打死你：", ne + 1, e_P
+		
+		// 若敌人没打死你（1 - e_P）且你也没打死敌人（1 - u_P）则进入下一回合，计算进入下一回合的概率
+		round_P = round_P * (1 - e_P) * (1 - u_P)
+		
+		// 若round_P = 0，则不可能进入下一轮，循环结束
+		If round_P = 0 Then
+			Exit For
+		End If
+	
+	Next
+	
+	fVictory = totP
+
+End Function
+
+Function fact(k)
+
+	Dim itmp
+	If k = 0 then
+		itmp = 1
+	Elseif k < 0 then
+		itmp = -1
+	Else
+		itmp = k * fact(k-1)
+	End If
+	fact = itmp
+
+End Function

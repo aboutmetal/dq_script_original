@@ -260,7 +260,7 @@ RunApp "com.square_enix.ocsd.magical"
 ShowMessage "初始化完成"
 Delay 10000
 Rem CIFMM
-/*
+
 If ReadUIConfig("sDesFlag")=true then
     sDesFlag = 1 
 	Else
@@ -348,7 +348,7 @@ PunchPower = 0
 Helper = 2
 Cycles = 30
 iRedFlag = 0
-
+*/
 
 //reset anything
 If Retry > RSAT Then 
@@ -470,7 +470,7 @@ btmp = bFlag(iRot, rScale, iPosBattleList(0), iPosBattleList(1), iClickNo(0), iC
 If btmp = 0 Then 
     Goto Refresh	
 End If
-*/
+
 /////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
 imode=1
@@ -1044,90 +1044,3 @@ Function fCmpColor(ix, iy, scolor, bequal, rotate, scale)
 	fCmpColor = CmpColor(Cint(iix*scale), Cint(iiy*scale), scolor, bequal)
 	
 End Function
-
-/*
-Function bFlag(rotate, scale, ix, iy, icx, icy, scolor, bequal, rtime, itime, ntime)
-// click icx,icy once, wait rtime, then check ix,iy. Do until color(ix,iy).bequal.scolor or times gt ntime
-// if color is found, return 1, else if time out, return 0
-//Dim ix, iy, scolor, rtime, itime, ntime, btmp
-
-Dim rtime_in
-If itime >= ntime Then 
-	bFlag = 0
-Else 
-	If 0 = bequal and -1 <> fCmpColor(ix, iy, scolor, 1, rotate, scale) Then 
-		bFlag = 1
-	ElseIf 1 = bequal and -1 = fCmpColor(ix, iy, scolor, 1, rotate, scale) Then 
-		bFlag = 1
-	Else 
-		itime = itime + 1
-		fTap(icx, icy, rotate, scale)
-		rtime_in = rtime * (1.0)
-		Delay Int(rtime_in * 1000)
-		btmp = bFlag(rotate, scale, ix, iy, icx, icy, scolor, bequal, rtime, itime, ntime)
-		bFlag = btmp
-	End If
-End If
-End Function
-
-Sub fTap(ix, iy, rotate, scale)
-
-Dim iix, iiy
-
-Select case rotate
-Case 1
-  iix = ix
-  iiy = iy
-Case 0
-  iiy = ix
-  iix = 720 - iy
-Case Else
-  EndScript
-End Select
-
-Tap Cint(iix*scale), Cint(iiy*scale)
-
-End Sub
-
-Sub fSwipe(ix1, iy1, ix2, iy2, rotate, scale)
-
-Dim iix1, iiy1, iix2, iiy2
-
-Select case rotate
-Case 1
-  iix1 = ix1
-  iiy1 = iy1
-  iix2 = ix2
-  iiy2 = iy2
-Case 0
-  iiy1 = ix1
-  iix1 = 720 - iy1
-  iiy2 = ix2
-  iix2 = 720 - iy2
-Case Else
-  EndScript
-End Select
-
-Swipe Cint(iix1*scale), Cint(iiy1*scale), Cint(iix2*scale), Cint(iiy2*scale)
-
-End Sub
-
-Function fCmpColor(ix, iy, scolor, bequal, rotate, scale)
-	
-Dim iix, iiy
-
-Select case rotate
-Case 1
-  iix = ix
-  iiy = iy
-Case 0
-  iiy = ix
-  iix = 720 - iy
-Case Else
-  EndScript
-End Select
-
-fCmpColor = CmpColor(Cint(iix*scale), Cint(iiy*scale), scolor, bequal)
-	
-End Function
-*/

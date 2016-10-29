@@ -266,6 +266,11 @@ If ReadUIConfig("sDesFlag")=true then
 	Else
     sDesFlag = 0
 End If
+If ReadUIConfig("imode")=true then
+    imode = 1 
+	Else
+    imode = 0
+End If
 If ReadUIConfig("iPutFlag")=true then
     iPutFlag = 1
     TracePrint "put 1"
@@ -391,6 +396,8 @@ btmp = bFlag(iRot, rScale, iPosMainHome(0), iPosMainHome(1), iClickSkip(0),iClic
 If btmp = 0 Then
     Goto Refresh
 End If
+fTap(iClickSkip(0), iClickSkip(1), iRot, rScale)
+Delay 1000
 fTap(iClickSkip(0), iClickSkip(1), iRot, rScale)
 Delay 1000
 //checkExploreP

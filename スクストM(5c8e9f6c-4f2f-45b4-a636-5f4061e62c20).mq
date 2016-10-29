@@ -260,7 +260,7 @@ RunApp "com.square_enix.ocsd.magical"
 ShowMessage "初始化完成"
 Delay 10000
 Rem CIFMM
-
+/*
 If ReadUIConfig("sDesFlag")=true then
     sDesFlag = 1 
 	Else
@@ -338,15 +338,18 @@ ElseIf ReadUIConfig("Helper") = 1 Then
 ElseIf ReadUIConfig("Helper") = 2 Then
 	Helper = 2
 End If
+
 /*
-iPutFlag = 1
+iPutFlag = 0
 DogeMode = 0
-sLevel = 1
+sLevel = 4
+imode=1
 PunchPower = 0
 Helper = 2
 Cycles = 30
 iRedFlag = 0
-*/
+
+
 //reset anything
 If Retry > RSAT Then 
     If sReset = 0 Then
@@ -467,10 +470,10 @@ btmp = bFlag(iRot, rScale, iPosBattleList(0), iPosBattleList(1), iClickNo(0), iC
 If btmp = 0 Then 
     Goto Refresh	
 End If
-
+*/
 /////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
-
+imode=1
 If 0 = imode then
 	// Choose last one and fight!
 	fSwipe(706, 706, 706, 150, iRot, rScale)
@@ -482,16 +485,18 @@ Else
 	// posBattle(2) is the rank of your enemy
 	// posBattle(3) is whether if this enemy has event bonus
 	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, idebug, posBattle)
+	traceprint btmp
 	If btmp = 0 Then
 		Goto Refresh
 	ElseIf btmp = -1 Then
 		TracePrint "Taisen error"
 		EndScript
 	End If
-	fTap(posBattle(0), posBattle(1), iRot, rScale)
+	Delay 3000
+	traceprint btmp	
+	traceprint posBattle(0), posBattle(1)
+	fTap (posBattle(0), posBattle(1), iRot, rScale)
 End If
-
-/////////////////////////////////////////////////////
 
 Delay 200
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
@@ -499,13 +504,10 @@ Delay 1300
 fTap(iClickNo(0), iClickNo(1), iRot, rScale)
 Delay 50
 
-	
-
 btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainHome(0),iClickMainHome(1), sColorMenuBattle, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then 
     Goto Refresh
 End If	
-
 
 // No BattleP
 Rem NBP

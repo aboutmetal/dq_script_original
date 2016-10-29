@@ -441,6 +441,7 @@ If ifind = -1 then
 	posBattle(2) = "N"
 	posBattle(3) = 0
 	strOutput = strOutput & "\n" & "都打不动"
+	traceprint "都打不动"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 Else
 	posBattle(0) = rect_ATK(0, ifind)
@@ -448,6 +449,7 @@ Else
 	posBattle(2) = Rank(ifind)
 	posBattle(3) = ievent(ifind)
 	strOutput = strOutput & "\n" & "打第" & CStr(ifind+1) & "个"
+	traceprint "打第" & CStr(ifind+1) & "个"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 	// 截图保存至文件
 	//itmp = CmdAM.SStoFile("OCR_", _

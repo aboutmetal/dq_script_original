@@ -1,3 +1,4 @@
+/*
 Dim SystemTime,DateOut
 SystemTime = Time()
 DateOut = 1482936379
@@ -6,7 +7,7 @@ If SystemTime > DateOut Then
 	TracePrint DateOut
 	EndScript
 End If
-
+*/
 Tap 0, 0
 Tap 0, 0
 Rem initialize
@@ -374,7 +375,8 @@ If -1 <> CmdAM.fCmpColor(iPosStart(0), iPosStart(1), sColorStart, 1, iRot, rScal
     fTap(iClickStart(0), iClickStart(1), iRot, rScale)
     Delay 50
 End If
-
+fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+Delay 500
 // Check if main menu & refresh
 btmp = bFlag(iRot, rScale, iPosMainMenu(0), iPosMainMenu(1), iClickMainHome(0),iClickMainHome(1), sColorMainMenu, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then

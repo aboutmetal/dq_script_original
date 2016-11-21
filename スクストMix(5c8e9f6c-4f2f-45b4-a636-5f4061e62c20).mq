@@ -438,11 +438,9 @@ End If
 
 // Enter battle menu 
 Rem EBM
-TracePrint "Enter battle menu "
-btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainBattle(0),iClickMainBattle(1), sColorMenuBattle, 0, rTimeStep2, 0, iTimeOut)
-If btmp = 0 Then 
-    Goto  NBP
-End If
+TracePrint "Enter battle menu"
+fTap(iPosMainBattleP(0), iPosMainBattleP(1), iRot, rScale)
+Delay 5000
 
 // Sure battleP
 btmp = bFlag(iRot, rScale, iPosMenuBattleP(0), iPosMenuBattleP(1), iClickNone(0),iClickNone(1), sColorMenuBattleP, 0, rTimeStep, 0, 2)
@@ -475,7 +473,6 @@ End If
 
 /////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
-imode=1
 If 0 = imode then
 	// Choose last one and fight!
 	fSwipe(706, 706, 706, 150, iRot, rScale)

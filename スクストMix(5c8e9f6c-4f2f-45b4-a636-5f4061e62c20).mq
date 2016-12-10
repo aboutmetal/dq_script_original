@@ -47,6 +47,16 @@ Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
 /////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Dim stamina_conserve, stamina_max, use_friend, enter_gate, explore_flag
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Import "SGSEXP.mql"
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
 
 Log.Open 'Open log file
@@ -55,12 +65,14 @@ Log.Open 'Open log file
 Import "CmdAM.mql"
 Import "CmdSGS.mql"
 
+/////////////////////////////////////////////////////
 // Variables that function Taisen needs
-Dim imode, idebug, win_chance, posBattle(3)
+// 2016/12/10 aboutmetal: add igroup_battle
+Dim imode, idebug, win_chance, posBattle(3), igroup_battle
 imode = 1
 idebug = 0
 win_chance = 0.95
-
+igroup_battle = 0
 // Initialize libs
 btmp = CmdAM.Initial()
 btmp = CmdSGS.Initial()
@@ -350,7 +362,23 @@ Helper = 2
 Cycles = 30
 iRedFlag = 0
 */
+/////////////////////////////////////////////////////
+// 2016/12/10 aboutmetal
+If ReadUIConfig("group_battle") = 0 Then 
+	igroup_battle = 0
+ElseIf ReadUIConfig("group_battle") = 1 Then
+	igroup_battle = 1
+End If
+/////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+stamina_conserve = 0
+stamina_max = 0
+use_friend = 1
+enter_gate = 1
+explore_flag = 1
+/////////////////////////////////////////////////////
 //reset anything
 If Retry > RSAT Then 
     If sReset = 0 Then
@@ -483,7 +511,7 @@ Else
 	// posBattle(0),(1) is the position, just click it
 	// posBattle(2) is the rank of your enemy
 	// posBattle(3) is whether if this enemy has event bonus
-	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, idebug, posBattle)
+	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, igroup_battle, idebug, posBattle)
 	traceprint btmp
 	If btmp = 0 Then
 		Goto Refresh
@@ -496,6 +524,8 @@ Else
 	traceprint posBattle(0), posBattle(1)
 	fTap (posBattle(0), posBattle(1), iRot, rScale)
 End If
+
+/////////////////////////////////////////////////////
 
 Delay 200
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
@@ -520,6 +550,18 @@ End If
 
 // Check Synergism Battle Mode
 If sLevel = 0 Then 
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+If 1 = explore_flag Then
+	Delay 1000
+	TracePrint "Auto explore"
+	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend, enter_gate) Then
+		Goto Refresh
+	End if
+End If
+/////////////////////////////////////////////////////
+
 	Goto Wait
 End If
 //EnterSynergismeMenu

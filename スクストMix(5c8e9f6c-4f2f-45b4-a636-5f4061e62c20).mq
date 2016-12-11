@@ -373,11 +373,25 @@ End If
 
 /////////////////////////////////////////////////////
 // 2016/12/08 aboutmetal
-stamina_conserve = 0
-stamina_max = 0
-use_friend = 1
-enter_gate = 1
-explore_flag = 1
+If ReadUIConfig("explore_flag") = true then
+    explore_flag = 1 
+Else
+    explore_flag = 0
+End If
+btmp = ReadUIConfig("stamina_conserve", "0")
+stamina_conserve = CInt(btmp)
+btmp = ReadUIConfig("stamina_max", "0")
+stamina_max = CInt(btmp)
+If ReadUIConfig("use_friend") = true then
+    use_friend = 1 
+Else
+    use_friend = 0
+End If
+If ReadUIConfig("enter_gate") = true then
+    enter_gate = 1 
+Else
+    enter_gate = 0
+End If
 /////////////////////////////////////////////////////
 //reset anything
 If Retry > RSAT Then 

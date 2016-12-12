@@ -568,7 +568,7 @@ If sLevel = 0 Then
 /////////////////////////////////////////////////////
 // 2016/12/08 aboutmetal
 If 1 = explore_flag Then
-	Delay 1000
+	Delay 3000 ' Delay longer to avoid message covering game UI
 	TracePrint "Auto explore"
 	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend, enter_gate) Then
 		Goto Refresh

@@ -445,6 +445,18 @@ btmp = bFlag(iRot, rScale, iPosMainMenu(0), iPosMainMenu(1), iClickMainHome(0),i
 If btmp = 0 Then
     //MessageBox "Cannot find main menu, stop"
     //EndScript
+    fTap(iClickNo(0), iClickNo(1), iRot, rScale)
+    Delay 1000
+    For 10
+        fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
+        Delay 500
+    Next
+    fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+    Delay 500
+    fTap(iClickSysOk(0), iClickSysOk(1), iRot, rScale)
+    Delay 500
+    Delay 1000
+    Retry=Retry+1
     Goto Refresh
 End If
 
@@ -1016,15 +1028,6 @@ CmdAM.CountDown(Cycles, 2000, 2000, iRot, rScale)
 //Refresh
 Rem Refresh
 TracePrint "Refresh"
-Retry = Retry + 1
-fTap(iClickNo(0), iClickNo(1), iRot, rScale)
-Delay 1000
-For 10
-    fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
-Delay 300
-Next
-fTap(iClickOk(0), iClickOk(1), iRot, rScale)
-Delay 1000
 fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
 Delay 1000
 RLcount = 0

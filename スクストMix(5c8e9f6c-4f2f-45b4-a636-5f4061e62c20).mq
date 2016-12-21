@@ -1,3 +1,4 @@
+/*
 Dim SystemTime,DateOut
 SystemTime = Time()
 DateOut = 1482936379
@@ -6,7 +7,7 @@ If SystemTime > DateOut Then
 	TracePrint DateOut
 	EndScript
 End If
-
+*/
 Tap 0, 0
 Tap 0, 0
 Rem initialize
@@ -22,7 +23,8 @@ Dim iPosReidooburiHP,iClickNone,iPosStart,iClickStart
 Dim iPosMainMenu,iPosMainHome,iClickMainHome,iPosMainBattleP,iClickSkip,iPosMainBattle,iClickMainBattle,iPosMenuBattleHome,iClickMenuBattleHome
 Dim iPosMenuBattleP,iPosChooseOpponent,iClickChooseOpponent
 Dim iPosMenuBattle,iPosBattleList,iPosBattleListHome,iClickBattleListHome,iPosYes,iClickYes,iPosNo,iClickNo
-Dim iPosChoose,iPosOk,iClickOk,iClickSysOk
+Dim iPosChoose,iPosOk,iClickOk
+Dim iClickSysWrn1, iClickSysWrn2, iClickSysWrn3
 Dim iClickMainSynergisme,iPosMenuSynergisme,iPosMenuSynergismeP,iPosMenuSynergismePMax,iPosReidooburiSeach,iClickReidooburiSeach
 Dim iPosSynergismeList,iClickSynergismeList,iPosSynergismeGift,iClickSynergismeGift
 Dim iPosMenuSynergismeListMenu,iPosSimpleSynergisme,iClickSimpleSynergisme,iPosMissionList,iClickMissionList,iPosMissionContinue
@@ -46,6 +48,16 @@ Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
 /////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Dim stamina_conserve, stamina_max, select_map, use_friend, enter_gate, explore_flag
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Import "SGSEXP.mql"
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
 
 Log.Open 'Open log file
@@ -54,12 +66,14 @@ Log.Open 'Open log file
 Import "CmdAM.mql"
 Import "CmdSGS.mql"
 
+/////////////////////////////////////////////////////
 // Variables that function Taisen needs
-Dim imode, idebug, win_chance, posBattle(3)
+// 2016/12/10 aboutmetal: add igroup_battle
+Dim imode, idebug, win_chance, posBattle(3), igroup_battle
 imode = 1
 idebug = 0
 win_chance = 0.95
-
+igroup_battle = 0
 // Initialize libs
 btmp = CmdAM.Initial()
 btmp = CmdSGS.Initial()
@@ -205,7 +219,9 @@ iPosChoose = Array(320,155)
 
 iPosOk = Array(615,500)
 iClickOk = Array(615,500)
-iClickSysOk = Array(640, 410)
+iClickSysWrn1 = Array(640, 370)
+iClickSysWrn2 = Array(640, 410)
+iClickSysWrn3 = Array(640, 460)
 
 //Synergisme
 iPosMainExploreP = Array(890,669)
@@ -265,6 +281,11 @@ If ReadUIConfig("sDesFlag")=true then
     sDesFlag = 1 
 	Else
     sDesFlag = 0
+End If
+If ReadUIConfig("imode")=true then
+    imode = 1 
+	Else
+    imode = 0
 End If
 If ReadUIConfig("iPutFlag")=true then
     iPutFlag = 1
@@ -333,20 +354,71 @@ ElseIf ReadUIConfig("Helper") = 1 Then
 ElseIf ReadUIConfig("Helper") = 2 Then
 	Helper = 2
 End If
+
 /*
-iPutFlag = 1
+iPutFlag = 0
 DogeMode = 0
-sLevel = 1
+sLevel = 4
+imode=1
 PunchPower = 0
 Helper = 2
 Cycles = 30
 iRedFlag = 0
 */
+/////////////////////////////////////////////////////
+// 2016/12/10 aboutmetal
+If ReadUIConfig("group_battle") = 0 Then 
+	igroup_battle = 0
+ElseIf ReadUIConfig("group_battle") = 1 Then
+	igroup_battle = 1
+End If
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+If ReadUIConfig("explore_flag") = true then
+    explore_flag = 1 
+Else
+    explore_flag = 0
+End If
+
+btmp = ReadUIConfig("stamina_conserve", "0")
+stamina_conserve = CInt(btmp)
+
+btmp = ReadUIConfig("stamina_max", "0")
+stamina_max = CInt(btmp)
+
+If ReadUIConfig("select_map") = 0 Then 
+	select_map = 0
+ElseIf ReadUIConfig("select_map") = 1 Then
+	select_map = 1
+ElseIf ReadUIConfig("select_map") = 2 Then
+	select_map = 2
+End If
+
+If ReadUIConfig("use_friend") = true then
+    use_friend = 1 
+Else
+    use_friend = 0
+End If
+
+If ReadUIConfig("enter_gate") = true then
+    enter_gate = 1 
+Else
+    enter_gate = 0
+End If
+/////////////////////////////////////////////////////
 //reset anything
 If Retry > RSAT Then 
     If sReset = 0 Then
     	EndScript
     End If
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
 	KillApp "com.square_enix.ocsd.magical"
     Delay 10000
     RunApp "com.square_enix.ocsd.magical"
@@ -366,7 +438,8 @@ If -1 <> CmdAM.fCmpColor(iPosStart(0), iPosStart(1), sColorStart, 1, iRot, rScal
     fTap(iClickStart(0), iClickStart(1), iRot, rScale)
     Delay 50
 End If
-
+fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+Delay 500
 // Check if main menu & refresh
 btmp = bFlag(iRot, rScale, iPosMainMenu(0), iPosMainMenu(1), iClickMainHome(0),iClickMainHome(1), sColorMainMenu, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then
@@ -391,6 +464,8 @@ btmp = bFlag(iRot, rScale, iPosMainHome(0), iPosMainHome(1), iClickSkip(0),iClic
 If btmp = 0 Then
     Goto Refresh
 End If
+fTap(iClickSkip(0), iClickSkip(1), iRot, rScale)
+Delay 1000
 fTap(iClickSkip(0), iClickSkip(1), iRot, rScale)
 Delay 1000
 //checkExploreP
@@ -426,11 +501,9 @@ End If
 
 // Enter battle menu 
 Rem EBM
-TracePrint "Enter battle menu "
-btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainBattle(0),iClickMainBattle(1), sColorMenuBattle, 0, rTimeStep2, 0, iTimeOut)
-If btmp = 0 Then 
-    Goto  NBP
-End If
+TracePrint "Enter battle menu"
+fTap(iPosMainBattleP(0), iPosMainBattleP(1), iRot, rScale)
+Delay 5000
 
 // Sure battleP
 btmp = bFlag(iRot, rScale, iPosMenuBattleP(0), iPosMenuBattleP(1), iClickNone(0),iClickNone(1), sColorMenuBattleP, 0, rTimeStep, 0, 2)
@@ -463,7 +536,6 @@ End If
 
 /////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
-
 If 0 = imode then
 	// Choose last one and fight!
 	fSwipe(706, 706, 706, 150, iRot, rScale)
@@ -474,14 +546,18 @@ Else
 	// posBattle(0),(1) is the position, just click it
 	// posBattle(2) is the rank of your enemy
 	// posBattle(3) is whether if this enemy has event bonus
-	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, idebug, posBattle)
+	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, igroup_battle, idebug, posBattle)
+	traceprint btmp
 	If btmp = 0 Then
 		Goto Refresh
 	ElseIf btmp = -1 Then
 		TracePrint "Taisen error"
 		EndScript
 	End If
-	fTap(posBattle(0), posBattle(1), iRot, rScale)
+	Delay 3000
+	traceprint btmp	
+	traceprint posBattle(0), posBattle(1)
+	fTap (posBattle(0), posBattle(1), iRot, rScale)
 End If
 
 /////////////////////////////////////////////////////
@@ -492,13 +568,10 @@ Delay 1300
 fTap(iClickNo(0), iClickNo(1), iRot, rScale)
 Delay 50
 
-	
-
 btmp = bFlag(iRot, rScale, iPosMenuBattle(0), iPosMenuBattle(1), iClickMainHome(0),iClickMainHome(1), sColorMenuBattle, 0, rTimeStep, 0, iTimeOut)
 If btmp = 0 Then 
     Goto Refresh
 End If	
-
 
 // No BattleP
 Rem NBP
@@ -512,6 +585,18 @@ End If
 
 // Check Synergism Battle Mode
 If sLevel = 0 Then 
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+If 1 = explore_flag Then
+	Delay 3000 ' Delay longer to avoid message covering game UI
+	TracePrint "Auto explore"
+	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate) Then
+		Goto Refresh
+	End if
+End If
+/////////////////////////////////////////////////////
+
 	Goto Wait
 End If
 //EnterSynergismeMenu
@@ -941,10 +1026,9 @@ CmdAM.CountDown(Cycles, 2000, 2000, iRot, rScale)
 /////////////////////////////////////////////////////
 
 //Refresh
-TracePrint "Refresh"
 Rem Refresh
+TracePrint "Refresh"
 fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
-Delay 10
 Delay 1000
 RLcount = 0
 Goto CIFMM
@@ -1035,90 +1119,3 @@ Function fCmpColor(ix, iy, scolor, bequal, rotate, scale)
 	fCmpColor = CmpColor(Cint(iix*scale), Cint(iiy*scale), scolor, bequal)
 	
 End Function
-
-/*
-Function bFlag(rotate, scale, ix, iy, icx, icy, scolor, bequal, rtime, itime, ntime)
-// click icx,icy once, wait rtime, then check ix,iy. Do until color(ix,iy).bequal.scolor or times gt ntime
-// if color is found, return 1, else if time out, return 0
-//Dim ix, iy, scolor, rtime, itime, ntime, btmp
-
-Dim rtime_in
-If itime >= ntime Then 
-	bFlag = 0
-Else 
-	If 0 = bequal and -1 <> fCmpColor(ix, iy, scolor, 1, rotate, scale) Then 
-		bFlag = 1
-	ElseIf 1 = bequal and -1 = fCmpColor(ix, iy, scolor, 1, rotate, scale) Then 
-		bFlag = 1
-	Else 
-		itime = itime + 1
-		fTap(icx, icy, rotate, scale)
-		rtime_in = rtime * (1.0)
-		Delay Int(rtime_in * 1000)
-		btmp = bFlag(rotate, scale, ix, iy, icx, icy, scolor, bequal, rtime, itime, ntime)
-		bFlag = btmp
-	End If
-End If
-End Function
-
-Sub fTap(ix, iy, rotate, scale)
-
-Dim iix, iiy
-
-Select case rotate
-Case 1
-  iix = ix
-  iiy = iy
-Case 0
-  iiy = ix
-  iix = 720 - iy
-Case Else
-  EndScript
-End Select
-
-Tap Cint(iix*scale), Cint(iiy*scale)
-
-End Sub
-
-Sub fSwipe(ix1, iy1, ix2, iy2, rotate, scale)
-
-Dim iix1, iiy1, iix2, iiy2
-
-Select case rotate
-Case 1
-  iix1 = ix1
-  iiy1 = iy1
-  iix2 = ix2
-  iiy2 = iy2
-Case 0
-  iiy1 = ix1
-  iix1 = 720 - iy1
-  iiy2 = ix2
-  iix2 = 720 - iy2
-Case Else
-  EndScript
-End Select
-
-Swipe Cint(iix1*scale), Cint(iiy1*scale), Cint(iix2*scale), Cint(iiy2*scale)
-
-End Sub
-
-Function fCmpColor(ix, iy, scolor, bequal, rotate, scale)
-	
-Dim iix, iiy
-
-Select case rotate
-Case 1
-  iix = ix
-  iiy = iy
-Case 0
-  iiy = ix
-  iix = 720 - iy
-Case Else
-  EndScript
-End Select
-
-fCmpColor = CmpColor(Cint(iix*scale), Cint(iiy*scale), scolor, bequal)
-	
-End Function
-*/

@@ -4,41 +4,41 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
 
     '-----------------------------------------------------------------------
 
-    ' Colors
-    ' ctr = color center, ofs = color offset, orig = img original color
+    ' Split BGR_thr (thresholding) into B, G and R
+    ' ctr = threshold color center, ofs = threshold color offset, orig = img original color
     Dim BGR_split
     Dim R_ctr, R_ofs, R_orig, G_ctr, G_ofs, G_orig, B_ctr, B_ofs, B_orig
 
-    ' bicolor_matrix: the binary image (0 or 1)
-    ' contour_matrix: the contour info (see contour algorithm in cvBlob library)
-    ' fill_matrix: the background filling number (Computer Engineering and Design, 1000.7024 (2006) 22.4347.02)
+    ' bicolor_matrix: the binary image matrix (0 or 1)
+    ' contour_matrix: the contour value matrix (see contour algorithm in cvBlob library)
+    ' fill_matrix: the background filling number matrix (Computer Engineering and Design, 1000.7024 (2006) 22.4347.02)
     ' All matrix are claimed as 1-dimension
     Dim bicolor_matrix(), fill_matrix(), contour_matrix()
 
-    ' cha_index: the index (sorting) of characters
-    ' The contour algorithm may gives incorrect index of contour, so sort them from left to right
-    ' border: (i,0:4) are the L,U,R,D boundaries for i-th contours, claimed as 1-dimension
-    ' circle: how many circles are there in each contour (number of inner contours)
+    ' cha_index: the index (sort) of recognised characters
+    ' Contour algorithm scans from top to bottom, not from left to right,
+	' so it may gives incorrect index for characters, need to sort them from left to right
+    ' border: (i,0:4) are the L,U,R,D boundaries for the i-th contours, also claimed as 1-dimension
+    ' circle: the circle (hole) number for each contour (inner contour number)
     Dim cha_index(), border(), circle()
 
     Dim ix1, iy1, ix2, iy2, height, width, s_height, s_width
 
-    ' displace: 8 directions, for calculating the bakcground filling number
-    Dim displace = Array(Array(-1,-1,0,1,1,1,0,-1),Array(0,-1,-1,-1,0,1,1,1))
-    ' count: statistics the bakcground filling number
+    ' direction: the 8 directions (nearest neighborhoods) around one point, for calculating the bakcground filling number
+    Dim direction = Array(Array(-1,-1,0,1,1,1,0,-1),Array(0,-1,-1,-1,0,1,1,1))
+	
+    ' count: store the background filling number
     Dim count(255), idirection
-    Dim left_open, right_open, left_up_open2, left_down_open, left_down_open2
-
+	
+    Dim left_open, right_open, left_up_open, left_up_open2, left_down_open, left_down_open2, left_up_close
     Dim i, j, ih, iw, iih, iiw, icontour, mcontour
-
     Dim itemp, temp(), err
-
-    Dim strOutput, iresult
+    Dim strOutput, result
     Dim tick1, tick2, tick0, tickflag
 
     '-----------------------------------------------------------------------
 
-    tickflag = 0
+    tickflag = 0 ' switch for timing
 
     '-----------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     End If
 
     '-----------------------------------------------------------------------
-    ' Split and convert input color
+    ' Split input color to R, G and B
 
     BGR_split = Split(BGR_thr, "-")
     ColorToRGB(BGR_split(0), R_ctr, G_ctr, B_ctr)
@@ -56,7 +56,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     '-----------------------------------------------------------------------
     ' Calculate coordinates
 
-    //TracePrint "Rotation:",rotate
+    'TracePrint "Rotation:",rotate
 
     Select case rotate
     Case 1
@@ -125,19 +125,17 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
 
     '-----------------------------------------------------------------------
     ' Find contours
-    ' The algorithm is taken from cvBlob library
 
     icontour = 1
 
-    ' Do not go to boundaries
+    ' Avoid boundaries
     For ih = 1 to height - 2
         For iw = 1 to width - 2
-            ' Only check painted points
+            ' Skip unpainted points
             If 1 = bicolor_matrix(ih * width + iw) Then
                 If 0 = contour_matrix(ih * width + iw) and 0 = bicolor_matrix((ih-1) * width + iw) Then
-                    ' (ih,iw) is painted and has not been marked in contour_matrix
-                    ' The pixel above (ih,iw) is not painted
-                    ' A new outer contour
+                    ' (ih,iw) is painted but not marked && the pixel above (ih,iw) is not painted
+                    ' (ih,iw) belongs to a new outer contour
                     contour_matrix(ih * width + iw) = icontour
                     'TracePrint "A new contour", iw, ih
                     circle(icontour-1) = 0
@@ -154,18 +152,18 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                     'TracePrint temp(0), temp(1), temp(2), temp(3)
                     icontour = icontour + 1
                 ElseIf 0 = contour_matrix((ih+1) * width + iw) and 0 = bicolor_matrix((ih+1) * width + iw) Then
-                    ' The pixel below (ih,iw) is not painted and has not been marked
-                    ' It is a point on inner contours
+                    ' The pixel below (ih,iw) is neither painted nor marked
+                    ' (ih,iw) is a point on inner contours
                     If 0 = contour_matrix(ih * width + iw) Then
-                        ' if (ih,iw) has not been marked, use its left neighbour
+                        ' (ih,iw) is not marked, then mark it according to its left neighbour
                         contour_matrix(ih * width + iw) = contour_matrix(ih * width + iw - 1)
                     End If
-                    'TracePrint "A inner contour", iw, ih
+                    'TracePrint "An inner contour", iw, ih
                     find_contour("in", iw, ih, width, height, bicolor_matrix, contour_matrix, temp)
                     'TracePrint "Finish contour"
                     circle(contour_matrix(ih * width + iw)-1) = circle(contour_matrix(ih * width + iw)-1) + 1
                 ElseIf 0 = contour_matrix(ih * width + iw) Then
-                    ' (ih,iw) left neighbour must be marked
+                    ' (ih,iw) is not marked, then its left neighbor must been marked
                     contour_matrix(ih * width + iw) = contour_matrix(ih * width + iw - 1)
                 End If
             End If	
@@ -179,11 +177,17 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     End If
 
     mcontour = icontour - 1
+    
+    If 1 > mcontour Then
+    	' No contour be found
+    	strOutput = ""
+    	Goto digit_end
+    End if
 
     '-----------------------------------------------------------------------
-    ' Now border(i,:), circle(i) has stored the border and circle number for i-th contour
-    ' Rearrange contours from left to right, make sure the i-th contour is the i-th character
-    ' cha_index will store the sorting result
+    ' Now border(), circle() has stored the border and circle number for every contour
+    ' Sorting contours from left to right, make sure the i-th contour is the i-th character
+    ' cha_index will store the sort result
 
     For i = 0 to mcontour - 1
         cha_index(i) = i
@@ -236,45 +240,74 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                 j = iw + border(cha_index(icontour-1) * 4)
 			
                 If 1 = bicolor_matrix(i * width + j) Then
-                    ' If the point is painted, bgd filling number = 0
+                ' If one point is painted, its bgd filling number = 0
                     fill_matrix(ih * s_width + iw) = 0
                 Else
                     For idirection = 0 to 7
-                        ' Do 8 directions
-                        iiw = iw + displace(0, idirection)
-                        iih = ih + displace(1, idirection)
+                    ' Do 8 directions
+                        iiw = iw + direction(0, idirection)
+                        iih = ih + direction(1, idirection)
                         While iiw >=0 and iiw <= s_width and iih >=0 and iih <= s_height
                             ' Check boundaries
                             If 1 = bicolor_matrix((i-ih+iih) * width + j-iw+iiw) Then
                                 fill_matrix(ih * s_width + iw) = fill_matrix(ih * s_width + iw) + 2 ^ idirection
-                                ' The bgd filling number is presented with a 8-bit binary number
-                                ' If one direction is filled, then the bit corresponding to this direction will be 1
-                                ' The lowest bit is corresponding to left direction, the 2nd lowest bit is the left-top one
-                                ' i.e. clockwise from left -> left-top -> top -> ...
+                                ' The bgd filling number for each point is presented with a 8-bit binary number
+								' One bit for one direction
+                                ' If one direction is filled, then the bit of this direction will be set to 1, otherwise 0
+                                ' The lowest bit is corresponding to the left direction, the 2nd lowest bit is the left-up one
+                                ' i.e. clockwise from left -> left-up -> up -> ...
+								' e.g., (01110101) means this point is filled on left, up, right, right-down and down directions
                                 Exit While
                             End If
-                            iiw = iiw + displace(0, idirection)
-                            iih = iih + displace(1, idirection)
+                            iiw = iiw + direction(0, idirection)
+                            iih = iih + direction(1, idirection)
                         Wend
                     Next
                 End If
                 count(fill_matrix(ih * s_width + iw)) = count(fill_matrix(ih * s_width + iw)) + 1
             Next
         Next
-	
+		
+		' 8 directions:
         ' 2 3 4
         ' 1 . 5
         ' 8 7 6
-        ' left_open: Among 1, 2 and 8, one or more directions are not filled
-        ' right_open: Among 4, 5 and 6, one or more directions are not filled
-        ' left_up_open2: Only 2 is not filled
-        ' left_down_open: 1, 7 and 8 are not filled
-        ' left_down_open2: Only 8 is not filled
+		' Let us mark one direction as '1' if it is filled, and '0' if it is not
+        ' left_open case:
+		' 	0 1 1	Or	1 1 1	Or	0 1 1	Or	1 1 1
+		' 	0 . 1		0 . 1		0 . 1		0 . 1
+		' 	0 1 1		0 1 1		1 1 1		1 1 1
+        ' right_open:
+		' 	1 1 0	Or	1 1 1	Or	1 1 0	Or	1 1 1
+		' 	1 . 0		1 . 0		1 . 0		1 . 0
+		' 	1 1 0		1 1 0		1 1 1		1 1 1
+		' left_up_open:
+		' 	0 0 1
+		' 	0 . 1
+		' 	1 1 1
+        ' left_up_open2:
+		' 	0 1 1
+		' 	1 . 1
+		' 	1 1 1
+        ' left_down_open:
+		' 	1 1 1
+		' 	0 . 1
+		' 	0 0 1
+        ' left_down_open2:
+		' 	1 1 1
+		' 	1 . 1
+		' 	0 1 1
+        ' left_up_close:
+		' 	1 1 0
+		' 	1 . 0
+		' 	0 0 0
         left_open       = (count(124) + count(252) + count(126) + count(254)) / (s_height+1) / (s_width+1)
         right_open      = (count(199) + count(231) + count(207) + count(239)) / (s_height+1) / (s_width+1)
+        left_up_open    = count(248) / (s_height+1) / (s_width+1)
         left_up_open2   = count(253) / (s_height+1) / (s_width+1)
         left_down_open  = count(62)  / (s_height+1) / (s_width+1)
         left_down_open2 = count(127) / (s_height+1) / (s_width+1)
+        left_up_close   = count(7)   / (s_height+1) / (s_width+1)
 	
         ' Recognition
 	
@@ -282,36 +315,41 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
 	
         If 2 = circle(cha_index(icontour-1)) Then
             ' Two circles, must be 8
-            iresult = 8
+            result = "8"
         ElseIf 1 = circle(cha_index(icontour-1)) Then
             ' One circle, 0, 4, 6 or 9
             If     left_open  > 0.01 and right_open     <= 0.01 Then
-                iresult = 9
+                result = "9"
             ElseIf left_open <= 0.01 and right_open      > 0.01 Then
-                iresult = 6
+                result = "6"
             ElseIf left_open <= 0.01 and left_down_open  > 0.01 Then
                 ' Rely on the font
-                iresult = 4
+                result = "4"
             ElseIf left_open <= 0.01 and left_down_open <= 0.01 Then
-                iresult = 0
+                result = "0"
             Else
                 err = 1
             End If
         ElseIf 0 = circle(cha_index(icontour-1)) Then
             ' No circle, 1, 2, 3, 5 or 7
-            If     left_open <= 0.01 and right_open <= 0.01 Then
-                iresult = 1
+            If     left_open <= 0.01 and right_open <= 0.01 and left_up_close <= 0.01 Then
+                result = "1"
+            ElseIf left_open <= 0.01 and right_open <= 0.01 and left_up_close >  0.01 Then
+            	result = "/" ' Recoginise slash (not backslash)
             ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2 <= 0.01 Then
                 ' Rely on the font
-                iresult = 2
-            ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
+                result = "2"
+            'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
+			ElseIf left_open  > 0.01 and left_up_close <= 0.1 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
                 ' Rely on the font
-                iresult = 3
-            ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2 <= 0.01 Then
+                result = "3"
+            'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2 <= 0.01 Then
+			ElseIf left_open  > 0.01 and left_up_close <= 0.1 and left_down_open2 <= 0.01 Then
                 ' Rely on the font
-                iresult = 5
-            ElseIf left_open  > 0.01 and right_open <= 0.01 Then
-                iresult = 7
+                result = "5"
+            'ElseIf left_open  > 0.01 and right_open <= 0.01 Then
+			ElseIf left_open  > 0.01 and left_up_close  > 0.1 Then
+                result = "7"
             Else
                 err = 1
             End if
@@ -320,16 +358,16 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
         End If	
 
         If 1 = err Then
-            iresult = 0
+            result = "0"
             TracePrint "Unknown", circle(cha_index(icontour-1))
             TracePrint left_up_open2
             TracePrint left_open, right_open
             TracePrint left_down_open, left_down_open2
         Else
-            'TracePrint iresult
+            'TracePrint result
         End If
 	
-        strOutput = strOutput & Cstr(iresult)
+        strOutput = strOutput & result
 	
     Next
 
@@ -340,6 +378,9 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     End If
 
     'ShowMessage strOutput
+    
+    Rem digit_end
+    
     digit = strOutput
 
 End Function
@@ -359,7 +400,7 @@ Function rank(x1, y1, x2, y2, rotate, scale)
 	'-----------------------------------------------------------------------
     ' Calculate coordinates
 
-    //TracePrint "Rotation:",rotate
+    'TracePrint "Rotation:",rotate
 
     Select case rotate
     Case 1
@@ -402,7 +443,7 @@ End Function
 Function find_contour(strInput, w0, h0, width, height, bicolor_matrix, contour_matrix, temp)
 
     '-----------------------------------------------------------------------
-    ' The algorithm is taken from cvBlob library
+    ' The algorithm is the same as in cvBlob library
 
     Dim icontour = contour_matrix(h0 * width + w0)
     Dim istart, isearch, isuc

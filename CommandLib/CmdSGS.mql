@@ -58,15 +58,15 @@ Import "OCRAM.mql"
 
 Function Initial()
 	
-	SetDictEX(0, "Attachment:SGS_NUM_DICT.txt")
-	SetDictEX(1, "Attachment:SGS_CHA_DICT.txt")
-	SetRowsNumber (33)
+	'SetDictEX(0, "Attachment:SGS_NUM_DICT.txt")
+	'SetDictEX(1, "Attachment:SGS_CHA_DICT.txt")
+	'SetRowsNumber (33)
 	Traceprint "CmdSGS Lib initialization"
 	Initial = 1
 	
 End Function
 
-Function TaiSen(imode, iRot, rScale, win_chance, idebug, posBattle)
+Function TaiSen(imode, iRot, rScale, win_chance, igroup_battle, idebug, posBattle)
 
 Dim rTimeStep
 Dim i, j, itmp
@@ -131,9 +131,9 @@ rect_u_ATK(2) = 578 // 右端x坐标
 rect_u_ATK(3) = 87 // 下沿y坐标
 
 // 第一个人：
-rect_Cha(0, 0) = 627//+90 // 左端x坐标
+rect_Cha(0, 0) = 627 + igroup_battle * 90 // 左端x坐标
 rect_Cha(1, 0) = 125 // 上沿y坐标
-rect_Cha(2, 0) = 670+40//+90 // 右端x坐标
+rect_Cha(2, 0) = 670+40 + igroup_battle * 90 // 右端x坐标
 rect_Cha(3, 0) = 170 // 下沿y坐标
 
 rect_HP(0, 0) = 330 // 左端x坐标
@@ -147,9 +147,9 @@ rect_ATK(2, 0) = 715 // 右端x坐标
 rect_ATK(3, 0) = 208 // 下沿y坐标
 
 // 滚屏后的第五个人：
-rect_Cha(0, 4) = 627//+90 // 左端x坐标
+rect_Cha(0, 4) = 627 + igroup_battle * 90 // 左端x坐标
 rect_Cha(1, 4) = 429 // 上沿y坐标
-rect_Cha(2, 4) = 670+40//+90 // 右端x坐标
+rect_Cha(2, 4) = 670+40 + igroup_battle * 90 // 右端x坐标
 rect_Cha(3, 4) = 474 // 下沿y坐标
 
 rect_HP(0, 4) = 330 // 左端x坐标
@@ -240,13 +240,13 @@ UseDict (0)
 sResult = OCRAM.digit(rect_u_HP(0), rect_u_HP(1), rect_u_HP(2), rect_u_HP(3), _
 					  coWhite, iRot, rScale)
 uHP = CInt(sResult)
-strOutput = strOutput & "\n" & "HP:" & CStr(Int(uHP/10000)) & "W"
+strOutput = strOutput & "\n" & "HP:" & CStr(Int((uHP+5000)/10000)) & "W"
 CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 
 sResult = OCRAM.digit(rect_u_ATK(0), rect_u_ATK(1), rect_u_ATK(2), rect_u_ATK(3), _
 					  coWhite, iRot, rScale)
 uATK = CInt(sResult)
-strOutput = strOutput & ",ATK:"& CStr(Int(uATK/10000)) & "W"
+strOutput = strOutput & ",ATK:"& CStr(Int((uATK+5000)/10000)) & "W"
 CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 
 UseDict(1)
@@ -300,7 +300,7 @@ For iline = 0 To 5
 	sResult = OCRAM.digit(rect_HP(0, iline), rect_HP(1, iline), _
 	            		  rect_HP(2, iline), rect_HP(3, iline), coWhite, iRot, rScale)
 	HP(iline) = CInt(sResult)
-	strOutput = strOutput & "\n" & "敌方HP:" & CStr(Int(HP(iline)/10000)) & "W"
+	strOutput = strOutput & "\n" & "敌方HP:" & CStr(Int((HP(iline)+5000)/10000)) & "W"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 	
 	If HP(iline) < 100000 Then
@@ -313,7 +313,7 @@ For iline = 0 To 5
 	sResult = OCRAM.digit(rect_ATK(0, iline), rect_ATK(1, iline), _
 	            		  rect_ATK(2, iline), rect_ATK(3, iline), coWhite, iRot, rScale)
 	ATK(iline) = CInt(sResult)
-	strOutput = strOutput & ",ATK:" & CStr(Int(ATK(iline)/10000)) & "W"
+	strOutput = strOutput & ",ATK:" & CStr(Int((ATK(iline)+5000)/10000)) & "W"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 	
 	If ATK(iline) < 100000 Then
@@ -441,6 +441,7 @@ If ifind = -1 then
 	posBattle(2) = "N"
 	posBattle(3) = 0
 	strOutput = strOutput & "\n" & "都打不动"
+	traceprint "都打不动"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 Else
 	posBattle(0) = rect_ATK(0, ifind)
@@ -448,6 +449,7 @@ Else
 	posBattle(2) = Rank(ifind)
 	posBattle(3) = ievent(ifind)
 	strOutput = strOutput & "\n" & "打第" & CStr(ifind+1) & "个"
+	traceprint "打第" & CStr(ifind+1) & "个"
 	CmdAM.showmsg(strOutput, 3000, 2000, 2000, iRot, rScale)
 	// 截图保存至文件
 	//itmp = CmdAM.SStoFile("OCR_", _

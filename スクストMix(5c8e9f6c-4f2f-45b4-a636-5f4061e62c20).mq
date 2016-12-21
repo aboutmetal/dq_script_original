@@ -23,7 +23,8 @@ Dim iPosReidooburiHP,iClickNone,iPosStart,iClickStart
 Dim iPosMainMenu,iPosMainHome,iClickMainHome,iPosMainBattleP,iClickSkip,iPosMainBattle,iClickMainBattle,iPosMenuBattleHome,iClickMenuBattleHome
 Dim iPosMenuBattleP,iPosChooseOpponent,iClickChooseOpponent
 Dim iPosMenuBattle,iPosBattleList,iPosBattleListHome,iClickBattleListHome,iPosYes,iClickYes,iPosNo,iClickNo
-Dim iPosChoose,iPosOk,iClickOk,iClickSysOk
+Dim iPosChoose,iPosOk,iClickOk
+Dim iClickSysWrn1, iClickSysWrn2, iClickSysWrn3
 Dim iClickMainSynergisme,iPosMenuSynergisme,iPosMenuSynergismeP,iPosMenuSynergismePMax,iPosReidooburiSeach,iClickReidooburiSeach
 Dim iPosSynergismeList,iClickSynergismeList,iPosSynergismeGift,iClickSynergismeGift
 Dim iPosMenuSynergismeListMenu,iPosSimpleSynergisme,iClickSimpleSynergisme,iPosMissionList,iClickMissionList,iPosMissionContinue
@@ -48,7 +49,7 @@ Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
 /////////////////////////////////////////////////////
 // 2016/12/08 aboutmetal
-Dim stamina_conserve, stamina_max, use_friend, enter_gate, explore_flag
+Dim stamina_conserve, stamina_max, select_map, use_friend, enter_gate, explore_flag
 /////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////
@@ -218,7 +219,9 @@ iPosChoose = Array(320,155)
 
 iPosOk = Array(615,500)
 iClickOk = Array(615,500)
-iClickSysOk = Array(640, 410)
+iClickSysWrn1 = Array(640, 370)
+iClickSysWrn2 = Array(640, 410)
+iClickSysWrn3 = Array(640, 460)
 
 //Synergisme
 iPosMainExploreP = Array(890,669)
@@ -378,15 +381,27 @@ If ReadUIConfig("explore_flag") = true then
 Else
     explore_flag = 0
 End If
+
 btmp = ReadUIConfig("stamina_conserve", "0")
 stamina_conserve = CInt(btmp)
+
 btmp = ReadUIConfig("stamina_max", "0")
 stamina_max = CInt(btmp)
+
+If ReadUIConfig("select_map") = 0 Then 
+	select_map = 0
+ElseIf ReadUIConfig("select_map") = 1 Then
+	select_map = 1
+ElseIf ReadUIConfig("select_map") = 2 Then
+	select_map = 2
+End If
+
 If ReadUIConfig("use_friend") = true then
     use_friend = 1 
 Else
     use_friend = 0
 End If
+
 If ReadUIConfig("enter_gate") = true then
     enter_gate = 1 
 Else
@@ -398,6 +413,12 @@ If Retry > RSAT Then
     If sReset = 0 Then
     	EndScript
     End If
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
 	KillApp "com.square_enix.ocsd.magical"
     Delay 10000
     RunApp "com.square_enix.ocsd.magical"
@@ -424,18 +445,6 @@ btmp = bFlag(iRot, rScale, iPosMainMenu(0), iPosMainMenu(1), iClickMainHome(0),i
 If btmp = 0 Then
     //MessageBox "Cannot find main menu, stop"
     //EndScript
-    fTap(iClickNo(0), iClickNo(1), iRot, rScale)
-    Delay 1000
-    For 10
-        fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
-        Delay 500
-    Next
-    fTap(iClickOk(0), iClickOk(1), iRot, rScale)
-    Delay 500
-    fTap(iClickSysOk(0), iClickSysOk(1), iRot, rScale)
-    Delay 500
-    Delay 1000
-    Retry=Retry+1
     Goto Refresh
 End If
 
@@ -570,7 +579,7 @@ If sLevel = 0 Then
 If 1 = explore_flag Then
 	Delay 3000 ' Delay longer to avoid message covering game UI
 	TracePrint "Auto explore"
-	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend, enter_gate) Then
+	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate) Then
 		Goto Refresh
 	End if
 End If
@@ -1005,10 +1014,18 @@ CmdAM.CountDown(Cycles, 2000, 2000, iRot, rScale)
 /////////////////////////////////////////////////////
 
 //Refresh
-TracePrint "Refresh"
 Rem Refresh
+TracePrint "Refresh"
+Retry = Retry + 1
+fTap(iClickNo(0), iClickNo(1), iRot, rScale)
+Delay 1000
+For 10
+    fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
+Delay 300
+Next
+fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+Delay 1000
 fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
-Delay 10
 Delay 1000
 RLcount = 0
 Goto CIFMM

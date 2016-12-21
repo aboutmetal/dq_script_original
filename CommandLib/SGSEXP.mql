@@ -11,20 +11,21 @@ Dim pos_elixir_OK, pos_elixir_cancel
 Dim pos_top_left, pos_monster_HP_leftbound
 Dim pos_gate_timer_center, pos_gate_timer_top_right
 Dim pos_friend_list_nofriend, pos_friend_list_1stfriend
-Dim pos_background
+Dim pos_mapselection_border
 
-Dim color_red, color_orange, color_purple, color_orange2, color_white
-Dim color_purple2, color_purple3, color_blue, color_green
+Dim color_red, color_orange, color_orange2, color_orange3, color_white
+Dim color_purple, color_purple2, color_purple3, color_blue, color_green
 
-color_red							= "2B2BF7-090909"
-color_orange						= "3B8CF5-090909"
-color_orange2						= "22A4FF-090909"
-color_purple						= "F53AA2-091009"
-color_purple2						= "7A1D51-091009"
-color_purple3						= "FC23D6-090909"
-color_blue							= "FF3132-090909"
-color_white							= "FFFFFF-272727"
-color_green							= "43FF53-090909"
+color_red							= "2B2BF7-090909"	' Button
+color_orange						= "3B8CF5-090909"	' Button
+color_orange2						= "22A4FF-090909"	' Mission UI, top left, background of player level
+color_orange3						= "3FCBFE-272027"	' Stamina overflow (when levelup)
+color_purple						= "F53AA2-091009"	' Button
+color_purple2						= "7A1D51-091009"	' Button in back layer (darker)
+color_purple3						= "FC23D6-090909"	' Monster HP bar
+color_blue							= "FF3132-090909"	' Timer background
+color_white							= "FFFFFF-272727"	' Common color for digits
+color_green							= "43FF53-090909"	' Button (when another player appears)
 
 pos_OCR_stamina_mainmenu			= Array( 835, 680,  902, 708)
 pos_OCR_bottom_center				= Array( 723, 667,  775, 696)
@@ -43,9 +44,9 @@ pos_gate_timer_center				= Array( 371, 296)
 pos_gate_timer_top_right			= Array(1070, 106)
 pos_friend_list_nofriend			= Array( 198, 148)
 pos_friend_list_1stfriend			= Array( 198, 346)
-pos_background						= Array(1050, 200)
+pos_mapselection_border				= Array( 255, 210)
 
-Function select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend, enter_gate)
+Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate)
 
 	Dim stamina_now
 	Dim result, explore_status, tmp
@@ -56,6 +57,11 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend,
 	result = OCRAM.digit(pos_OCR_stamina_mainmenu(0), pos_OCR_stamina_mainmenu(1), _
 	            		 pos_OCR_stamina_mainmenu(2), pos_OCR_stamina_mainmenu(3), _
 	            		 color_white, iRot, rScale)
+	If 0 = Cint(result) Then
+		result = OCRAM.digit(pos_OCR_stamina_mainmenu(0), pos_OCR_stamina_mainmenu(1), _
+	            			 pos_OCR_stamina_mainmenu(2), pos_OCR_stamina_mainmenu(3), _
+	            			 color_orange3, iRot, rScale)
+	End If
 	ReleaseCapture
 
 	stamina_now = Cint(result)
@@ -79,9 +85,17 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend,
 	KeepCapture
 	result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	           			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
-	ReleaseCapture
 	tmp = Split(result, "/")
-	stamina_now = Cint(tmp(0))
+	If 0 = Cint(tmp(0)) Then
+		result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	            			 pos_OCR_stamina(2), pos_OCR_stamina(3), _
+	            			 color_orange3, iRot, rScale)
+	    tmp = Split(result, "/")
+	End If
+	ReleaseCapture 
+	
+	stamina_now = CInt(tmp(0))
+	TracePrint result
 	TracePrint "Stamina now:",stamina_now
 	
 	If stamina_now < stamina_max Then
@@ -97,6 +111,39 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, use_friend,
 		select_mission = "E"
 		Goto select_mission_end
 	End if
+	
+	' In case that one need to select one map from map list
+	If -1 <> CmdAM.fCmpColor(pos_mapselection_border(0), pos_mapselection_border(1), color_orange, 1, iRot, rScale) Then
+	
+		Select Case select_map
+		Case 0 ' Player selected normal map, then the map list should not appear. Go back to main menu
+			select_mission = "O"
+			CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+			Delay 1000
+			CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+			Goto select_mission_end
+		Case 1 ' Player selected event map
+		' First drag to bottom, then click three times from bottom to top, to make sure there is always one map being selected
+			CmdAM.fSwipe(706, 706, 706, 150, iRot, rScale)
+			Delay 2000
+			CmdAM.fTap(640, 684, iRot, rScale)
+			Delay 500
+			CmdAM.fTap(640, 414, iRot, rScale)
+			Delay 500
+			CmdAM.fTap(640, 144, iRot, rScale)
+			Delay 500
+		Case 2 ' Player selected tower map (expert)
+		' First click expert tower, then click the first map
+			CmdAM.fTap(640, 360, iRot, rScale)
+			Delay 1000
+			CmdAM.fTap(640, 144, iRot, rScale)
+			Delay 1000
+		Case Else
+			select_mission = "E"
+			Goto select_mission_end
+		End Select
+	
+	End If
 		
 	explore_status = explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
 	select_mission = explore_status
@@ -122,7 +169,7 @@ Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
 	Dim time_delay
 	Dim fork_status
 
-	pos_gogogo = Array(640, 360)
+	pos_gogogo = Array(640, 456)
 	pos_nextstep = Array(-1, -1)
 	
 	time_delay = 500
@@ -317,8 +364,14 @@ Function fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, click)
 	    
 		result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	            			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
-	    TracePrint result
 	    tmp = Split(result, "/")
+		If 0 = Cint(tmp(0)) Then
+			result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	            				 pos_OCR_stamina(2), pos_OCR_stamina(3), _
+	            				 color_orange3, iRot, rScale)
+	        tmp = Split(result, "/")
+		End If
+	    TracePrint result
 	    stamina_now = Cint(tmp(0))
 	    TracePrint "Stamina now:",stamina_now
 	    

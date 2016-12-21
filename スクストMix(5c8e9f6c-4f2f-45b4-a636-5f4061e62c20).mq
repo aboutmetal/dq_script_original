@@ -273,7 +273,7 @@ End If
 tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)
 RunApp "com.square_enix.ocsd.magical"
-ShowMessage "åˆå§‹åŒ–å®Œæˆ"
+ShowMessage "³õÊ¼»¯Íê³É"
 Delay 10000
 Rem CIFMM
 
@@ -303,35 +303,35 @@ If ReadUIConfig("iRedFlag")=true then
 End If
 If ReadUIConfig("PunchPower")=true then
     PunchPower = 1
-    TracePrint "å…¨åŠ›4å€æ”»å‡»"
+    TracePrint "È«Á¦4±¶¹¥»÷"
 	Else 
     PunchPower = 0
-   TracePrint  "é€šå¸¸æ”»å‡»"
+   TracePrint  "Í¨³£¹¥»÷"
 End If
 If ReadUIConfig("DogeMode")=true then
     DogeMode = 1
-    TracePrint "ç§€æ©çˆ±"
+    TracePrint "Ğã¶÷°®"
 	Else 
     DogeMode = 0
-    TracePrint  "çˆ±æŠ¤åŠ¨ç‰©"
+    TracePrint  "°®»¤¶¯Îï"
 End If
 If ReadUIConfig("sLevel")=0 then
-	ShowMessage "å½“å‰é€‰æ‹©ä¸ºä¸è¿›è¡ŒååŠ›æˆ˜"
+	ShowMessage "µ±Ç°Ñ¡ÔñÎª²»½øĞĞĞ­Á¦Õ½"
 	sLevel = 0
 ElseIf ReadUIConfig("sLevel") = 1 Then
 	sLevel = 1
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯åˆçº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³õ¼¶"
 ElseIf ReadUIConfig("sLevel") = 2 Then
 	sLevel = 2
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸­çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÖĞ¼¶"
 ElseIf ReadUIConfig("sLevel") = 3 Then
 	sLevel = 3
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸Šçº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÉÏ¼¶"
 ElseIf ReadUIConfig("sLevel") = 4 Then
 	sLevel = 4
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬¼¶"
 ElseIf ReadUIConfig("sLevel")=5 then
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…å¼©çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬åó¼¶"
 	sLevel = 5
 End If
 If ReadUIConfig("Cycles") = 0 Then 
@@ -452,6 +452,7 @@ If btmp = 0 Then
         Delay 500
     Next
     fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+    Delay 500
     Delay 1000
     Retry=Retry+1
     Goto Refresh
@@ -754,9 +755,9 @@ TracePrint sPosLv1(1)
 			btmp = fCmpColor(iPosLv1(0), sPosLv1(1), sColorLv1, 1, iRot, rScale)
 				if btmp = -1 then
     				iLv1 = 0
-    				TracePrint "ä¸æ˜¯ç™½è‰²"
+    				TracePrint "²»ÊÇ°×É«"
 				Else
-    				TracePrint "æ˜¯ç™½è‰²!"
+    				TracePrint "ÊÇ°×É«!"
     				iLv1 = iLv1 + 1
 				End If
 			

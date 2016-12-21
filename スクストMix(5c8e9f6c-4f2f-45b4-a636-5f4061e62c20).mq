@@ -273,7 +273,7 @@ End If
 tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)
 RunApp "com.square_enix.ocsd.magical"
-ShowMessage "³õÊ¼»¯Íê³É"
+ShowMessage "åˆå§‹åŒ–å®Œæˆ"
 Delay 10000
 Rem CIFMM
 
@@ -303,35 +303,35 @@ If ReadUIConfig("iRedFlag")=true then
 End If
 If ReadUIConfig("PunchPower")=true then
     PunchPower = 1
-    TracePrint "È«Á¦4±¶¹¥»÷"
+    TracePrint "å…¨åŠ›4å€æ”»å‡»"
 	Else 
     PunchPower = 0
-   TracePrint  "Í¨³£¹¥»÷"
+   TracePrint  "é€šå¸¸æ”»å‡»"
 End If
 If ReadUIConfig("DogeMode")=true then
     DogeMode = 1
-    TracePrint "Ğã¶÷°®"
+    TracePrint "ç§€æ©çˆ±"
 	Else 
     DogeMode = 0
-    TracePrint  "°®»¤¶¯Îï"
+    TracePrint  "çˆ±æŠ¤åŠ¨ç‰©"
 End If
 If ReadUIConfig("sLevel")=0 then
-	ShowMessage "µ±Ç°Ñ¡ÔñÎª²»½øĞĞĞ­Á¦Õ½"
+	ShowMessage "å½“å‰é€‰æ‹©ä¸ºä¸è¿›è¡ŒååŠ›æˆ˜"
 	sLevel = 0
 ElseIf ReadUIConfig("sLevel") = 1 Then
 	sLevel = 1
-	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³õ¼¶"
+	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯åˆçº§"
 ElseIf ReadUIConfig("sLevel") = 2 Then
 	sLevel = 2
-	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÖĞ¼¶"
+	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸­çº§"
 ElseIf ReadUIConfig("sLevel") = 3 Then
 	sLevel = 3
-	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÉÏ¼¶"
+	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸Šçº§"
 ElseIf ReadUIConfig("sLevel") = 4 Then
 	sLevel = 4
-	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬¼¶"
+	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…çº§"
 ElseIf ReadUIConfig("sLevel")=5 then
-	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬åó¼¶"
+	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…å¼©çº§"
 	sLevel = 5
 End If
 If ReadUIConfig("Cycles") = 0 Then 
@@ -452,9 +452,6 @@ If btmp = 0 Then
         Delay 500
     Next
     fTap(iClickOk(0), iClickOk(1), iRot, rScale)
-    Delay 500
-    fTap(iClickSysOk(0), iClickSysOk(1), iRot, rScale)
-    Delay 500
     Delay 1000
     Retry=Retry+1
     Goto Refresh
@@ -757,9 +754,9 @@ TracePrint sPosLv1(1)
 			btmp = fCmpColor(iPosLv1(0), sPosLv1(1), sColorLv1, 1, iRot, rScale)
 				if btmp = -1 then
     				iLv1 = 0
-    				TracePrint "²»ÊÇ°×É«"
+    				TracePrint "ä¸æ˜¯ç™½è‰²"
 				Else
-    				TracePrint "ÊÇ°×É«!"
+    				TracePrint "æ˜¯ç™½è‰²!"
     				iLv1 = iLv1 + 1
 				End If
 			

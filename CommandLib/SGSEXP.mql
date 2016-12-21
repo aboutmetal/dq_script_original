@@ -1,0 +1,536 @@
+' Auto exploration for SGS
+
+Import "CmdAM.mql"
+Import "OCRAM.mql"
+
+Dim pos_OCR_stamina_mainmenu, pos_OCR_bottom_center, pos_OCR_stamina
+Dim pos_button_bottom_center, pos_button_bottom_right, pos_button_top_right
+Dim pos_button_startmission
+Dim pos_confirm_OK, pos_confirm_cancel
+Dim pos_elixir_OK, pos_elixir_cancel
+Dim pos_top_left, pos_monster_HP_leftbound
+Dim pos_gate_timer_center, pos_gate_timer_top_right
+Dim pos_friend_list_nofriend, pos_friend_list_1stfriend
+Dim pos_mapselection_border
+
+Dim color_red, color_orange, color_orange2, color_orange3, color_white
+Dim color_purple, color_purple2, color_purple3, color_blue, color_green
+
+color_red							= "2B2BF7-090909"	' Button
+color_orange						= "3B8CF5-090909"	' Button
+color_orange2						= "22A4FF-090909"	' Mission UI, top left, background of player level
+color_orange3						= "3FCBFE-272027"	' Stamina overflow (when levelup)
+color_purple						= "F53AA2-091009"	' Button
+color_purple2						= "7A1D51-091009"	' Button in back layer (darker)
+color_purple3						= "FC23D6-090909"	' Monster HP bar
+color_blue							= "FF3132-090909"	' Timer background
+color_white							= "FFFFFF-272727"	' Common color for digits
+color_green							= "43FF53-090909"	' Button (when another player appears)
+
+pos_OCR_stamina_mainmenu			= Array( 835, 680,  902, 708)
+pos_OCR_bottom_center				= Array( 723, 667,  775, 696)
+pos_OCR_stamina						= Array( 750,   6,  900, 30)
+pos_button_bottom_center			= Array( 486, 617)
+pos_button_startmission				= Array(1067, 610)
+pos_confirm_OK						= Array( 400, 465)
+pos_confirm_cancel					= Array( 735, 465)
+pos_elixir_OK						= Array( 400, 600)
+pos_elixir_cancel					= Array( 735, 600)
+pos_button_bottom_right				= Array(1249, 696)
+pos_top_left						= Array(  65,  14)
+pos_monster_HP_leftbound			= Array( 361, 172)
+pos_button_top_right				= Array(1191,  18)
+pos_gate_timer_center				= Array( 371, 296)
+pos_gate_timer_top_right			= Array(1070, 106)
+pos_friend_list_nofriend			= Array( 198, 148)
+pos_friend_list_1stfriend			= Array( 198, 346)
+pos_mapselection_border				= Array( 255, 210)
+
+Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate)
+
+	Dim stamina_now
+	Dim result, explore_status, tmp
+	
+	select_mission = "U"
+	
+	KeepCapture
+	result = OCRAM.digit(pos_OCR_stamina_mainmenu(0), pos_OCR_stamina_mainmenu(1), _
+	            		 pos_OCR_stamina_mainmenu(2), pos_OCR_stamina_mainmenu(3), _
+	            		 color_white, iRot, rScale)
+	If 0 = Cint(result) Then
+		result = OCRAM.digit(pos_OCR_stamina_mainmenu(0), pos_OCR_stamina_mainmenu(1), _
+	            			 pos_OCR_stamina_mainmenu(2), pos_OCR_stamina_mainmenu(3), _
+	            			 color_orange3, iRot, rScale)
+	End If
+	ReleaseCapture
+
+	stamina_now = Cint(result)
+	TracePrint "Stamina now:",stamina_now
+	
+	If stamina_now < stamina_max Then
+		select_mission = "O"
+		Goto select_mission_end
+	End if
+	
+	Rem mission_menu
+	
+	If 0 = CmdAM.bFlag(iRot, rScale, _
+					   pos_button_startmission(0), pos_button_startmission(1), _
+					   pos_OCR_stamina_mainmenu(0), pos_OCR_stamina_mainmenu(1), _
+					   color_red, 0, 1, 0, 60) Then
+		select_mission = "E"
+		Goto select_mission_end
+	End if
+	
+	KeepCapture
+	result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	           			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
+	tmp = Split(result, "/")
+	If 0 = Cint(tmp(0)) Then
+		result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	            			 pos_OCR_stamina(2), pos_OCR_stamina(3), _
+	            			 color_orange3, iRot, rScale)
+	    tmp = Split(result, "/")
+	End If
+	ReleaseCapture 
+	
+	stamina_now = CInt(tmp(0))
+	TracePrint result
+	TracePrint "Stamina now:",stamina_now
+	
+	If stamina_now < stamina_max Then
+		select_mission = "O"
+		CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+		Goto select_mission_end
+	End if
+		
+	If 0 = CmdAM.bFlag(iRot, rScale, _
+					   pos_button_startmission(0), pos_button_startmission(1), _
+					   pos_button_startmission(0), pos_button_startmission(1), _
+					   color_red, 1, 1, 0, 60) Then
+		select_mission = "E"
+		Goto select_mission_end
+	End if
+	
+	' In case that one need to select one map from map list
+	If -1 <> CmdAM.fCmpColor(pos_mapselection_border(0), pos_mapselection_border(1), color_orange, 1, iRot, rScale) Then
+	
+		Select Case select_map
+		Case 0 ' Player selected normal map, then the map list should not appear. Go back to main menu
+			select_mission = "O"
+			CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+			Delay 1000
+			CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+			Goto select_mission_end
+		Case 1 ' Player selected event map
+		' First drag to bottom, then click three times from bottom to top, to make sure there is always one map being selected
+			CmdAM.fSwipe(706, 706, 706, 150, iRot, rScale)
+			Delay 2000
+			CmdAM.fTap(640, 684, iRot, rScale)
+			Delay 500
+			CmdAM.fTap(640, 414, iRot, rScale)
+			Delay 500
+			CmdAM.fTap(640, 144, iRot, rScale)
+			Delay 500
+		Case 2 ' Player selected tower map (expert)
+		' First click expert tower, then click the first map
+			CmdAM.fTap(640, 360, iRot, rScale)
+			Delay 1000
+			CmdAM.fTap(640, 144, iRot, rScale)
+			Delay 1000
+		Case Else
+			select_mission = "E"
+			Goto select_mission_end
+		End Select
+	
+	End If
+		
+	explore_status = explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
+	select_mission = explore_status
+	If "E" = explore_status or "R" = explore_status or "NR" = explore_status Then
+		Goto select_mission_end
+	ElseIf "M" = explore_status Then
+		Goto mission_menu
+	End If
+	
+	Rem select_mission_end
+	If "U" = select_mission Then
+		select_mission = "E"
+	End if
+	
+End function
+
+Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
+
+	Dim pos_gogogo, pos_nextstep
+	Dim color1, color2
+	Dim color_mem
+	Dim loop_count, loop_max
+	Dim time_delay
+	Dim fork_status
+
+	pos_gogogo = Array(640, 456)
+	pos_nextstep = Array(-1, -1)
+	
+	time_delay = 500
+	loop_max = 60 * 1000 / time_delay
+	
+	loop_count = 0
+	Do While loop_count <= loop_max
+	
+		color1 = CmdAM.fCmpColor(pos_button_top_right(0), pos_button_top_right(1), color_purple, 1, iRot, rScale)
+		color2 = CmdAM.fCmpColor(pos_button_top_right(0), pos_button_top_right(1), color_purple2, 1, iRot, rScale)
+		'TracePrint fork_status, color1, color2
+		
+		If -1 <> color1 or -1 <> color2 Then
+			Delay 1000
+			fork_status = fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, pos_nextstep)
+			explore = fork_status
+			If "R" = fork_status or "M" = fork_status Then
+				CmdAM.fTap(pos_nextstep(0), pos_nextstep(1), iRot, rScale)
+				Exit Do
+			ElseIf "O" = fork_status Then
+				loop_count = 0
+				CmdAM.fTap(pos_nextstep(0), pos_nextstep(1), iRot, rScale)
+				Delay 1000
+			ElseIf "NR" = fork_status Then
+				CmdAM.fTap(pos_nextstep(0), pos_nextstep(1), iRot, rScale)
+				Delay 1000
+				CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
+				Exit Do
+			ElseIf "E" = fork_status Then
+				CmdAM.fTap(pos_gogogo(0), pos_gogogo(1), iRot, rScale)
+				Delay time_delay
+				loop_count = loop_count + 1
+			End if
+		Else
+			CmdAM.fTap(pos_gogogo(0), pos_gogogo(1), iRot, rScale)
+			Delay time_delay
+			loop_count = loop_count + 1
+		End if
+	
+	Loop
+	
+	If loop_count > loop_max Then
+		explore = "E"
+	End if
+
+End function
+
+Function fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, click)
+
+	Dim pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10, pos11
+	Dim result, tmp, stamina_require, stamina_now
+	Dim monster, shop, map_end, gate, map_event_w_gate, map_event_wo_gate, other_player, friend_list, confirm_dialog, elixir_dialog, other_message
+	Dim return_mission_menu, return_main_menu, need_return, err
+	
+	pos1	= pos_button_bottom_center
+	pos2	= pos_button_bottom_right
+	pos3	= pos_button_top_right
+	
+	pos4	= pos_top_left
+	pos5	= pos_monster_HP_leftbound
+	pos6	= pos_gate_timer_center
+	pos7	= pos_gate_timer_top_right
+
+	pos8	= pos_confirm_OK
+	pos9	= pos_elixir_cancel
+	pos10	= pos_friend_list_nofriend
+	pos11	= pos_friend_list_1stfriend
+	
+	monster					= 0
+	shop					= 0
+	map_end					= 0
+	gate					= 0
+	map_event_w_gate		= 0
+	map_event_wo_gate		= 0
+	other_player			= 0
+	friend_list				= 0
+	confirm_dialog			= 0
+	elixir_dialog			= 0
+	other_message			= 0
+
+	stamina_require 		= 0
+	
+	return_mission_menu 	= 0
+	return_main_menu 		= 0
+	need_return		 		= 0
+	
+	err						= 0
+	
+	KeepCapture
+	
+	' pos4 = orange2
+	' 	pos1 = red
+	'		pos5 = purple3
+	'			Monster appears
+	' 		pos2 = purple, pos5 <> purple3
+	'			Shop appears
+	' 		pos2 <> purple, pos5 <> purple3
+	'			Map ends
+	' 	pos1 = orange
+	'		pos6 = blue
+	'			Gate appears
+	' 		pos7 = blue
+	'			Map events (in gate)
+	' 		pos6 <> blue, pos7 <> blue
+	'			Map events (no gate)
+	'	pos1 = green
+	'		Player appears
+	' pos4 <> orange2 
+	'	pos3 = purple
+	'		Friend list
+	'	pos3 = purple2, pos8 = red
+	'		Confirm dialog
+	'	pos3 = purple2, pos9 = purple
+	'		Elixir dialog
+	'	pos3 = purple2
+	'		Some other messages appear
+	
+	If -1 <> CmdAM.fCmpColor(pos4(0), pos4(1), color_orange2, 1, iRot, rScale) Then
+	
+		If -1 <> CmdAM.fCmpColor(pos1(0), pos1(1), color_red, 1, iRot, rScale) Then
+		
+			If -1 <> CmdAM.fCmpColor(pos5(0), pos5(1), color_purple3, 1, iRot, rScale) Then
+				TracePrint "Monster appears"
+				monster = 1
+			ElseIf -1 <> CmdAM.fCmpColor(pos2(0), pos2(1), color_purple, 1, iRot, rScale) Then
+				TracePrint "Shop appears"
+				shop = 1
+			Else
+				TracePrint "Map ends"
+				map_end = 1
+			End if	
+
+		Elseif -1 <> CmdAM.fCmpColor(pos1(0), pos1(1), color_orange, 1, iRot, rScale) Then
+		
+			If -1 <> CmdAM.fCmpColor(pos6(0), pos6(1), color_blue, 1, iRot, rScale) Then
+				TracePrint "Gate appears"
+				gate = 1
+			ElseIf -1 <> CmdAM.fCmpColor(pos7(0), pos7(1), color_blue, 1, iRot, rScale) Then
+				TracePrint "Map events in the gate"
+				map_event_w_gate = 1
+			Else
+				TracePrint "Map events"
+				map_event_wo_gate = 1
+			End if
+	
+		Elseif -1 <> CmdAM.fCmpColor(pos1(0), pos1(1), color_green, 1, iRot, rScale) Then
+		
+			TracePrint "Another player appears"
+			other_player = 1
+			
+		Else
+		
+			TracePrint "Error!"
+			err	= 1
+			
+		End if
+
+	Else
+	
+		If -1 <> CmdAM.fCmpColor(pos3(0), pos3(1), color_purple, 1, iRot, rScale) Then
+			TracePrint "Friend list is shown"
+			friend_list = 1
+		ElseIf -1 <> CmdAM.fCmpColor(pos8(0), pos8(1), color_red, 1, iRot, rScale) Then
+			TracePrint "A confirm dialog appears"
+			confirm_dialog = 1
+		ElseIf -1 <> CmdAM.fCmpColor(pos9(0), pos9(1), color_purple, 1, iRot, rScale) Then
+			TracePrint "Elixir dialog appears"
+			elixir_dialog = 1
+		ElseIf -1 <> CmdAM.fCmpColor(pos3(0), pos3(1), color_purple2, 1, iRot, rScale) Then
+			TracePrint "Some other message appear"
+			other_message = 1
+		Else
+			TracePrint "Error!"
+			err	= 1
+		End If
+		
+	End if
+	
+	If 1 = err Then
+		click(0) = -1
+		click(1) = -1
+		fork = "E"
+		Goto fork_end
+	End if
+	
+	If 1 = monster or 1 = gate or 1 = map_event_w_gate or 1 = map_event_wo_gate Then
+	
+		result = OCRAM.digit(pos_OCR_bottom_center(0), pos_OCR_bottom_center(1), _
+	            			 pos_OCR_bottom_center(2), pos_OCR_bottom_center(3), color_white, iRot, rScale)
+	    stamina_require = Cint(result)
+	    TracePrint "Stamina require:",stamina_require
+	    
+		result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	            			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
+	    tmp = Split(result, "/")
+		If 0 = Cint(tmp(0)) Then
+			result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
+	            				 pos_OCR_stamina(2), pos_OCR_stamina(3), _
+	            				 color_orange3, iRot, rScale)
+	        tmp = Split(result, "/")
+		End If
+	    TracePrint result
+	    stamina_now = Cint(tmp(0))
+	    TracePrint "Stamina now:",stamina_now
+	    
+	End if
+	
+	If 1 = monster Then
+	    
+	    If stamina_require > 0 Then
+			If (stamina_now - stamina_require) >= 0 Then
+				' Player has enough stamina
+				TracePrint "Stamina is OK, gogogo"
+				click(0) = pos1(0)
+				click(1) = pos1(1)
+			Else
+				' Return to main menu
+				TracePrint "Stamina isn't enough, back to main menu"
+				click(0) = pos3(0)
+				click(1) = pos3(1)
+				return_main_menu = 1
+			End if
+		Else
+			' Just fight
+			TracePrint "No stamina is needed, gogogo"
+			click(0) = pos1(0)
+			click(1) = pos1(1)
+		End if
+		
+	ElseIf 1 = shop Then
+	
+		click(0) = pos2(0)
+		click(1) = pos2(1)
+		
+	ElseIf 1 = map_end Then
+	
+		click(0) = pos1(0)
+		click(1) = pos1(1)
+		return_mission_menu = 1
+		
+	ElseIf 1 = gate Then
+	
+		If 1 = enter_gate Then
+			If (stamina_now - stamina_require) >= 0 Then
+				' Enter the gate
+				TracePrint "Stamina is OK, enter the gate"
+				click(0) = pos1(0)
+				click(1) = pos1(1)
+			Else
+				' Not enough stamina, return to main menu
+				TracePrint "Stamina isn't enough, back to main menu"
+				click(0) = pos3(0)
+				click(1) = pos3(1)
+				return_main_menu = 1
+			End if
+		Else
+			If (stamina_now - stamina_require) >= stamina_conserve Then
+				' Leave the gate
+				TracePrint "Leave the gate"
+				click(0) = pos2(0)
+				click(1) = pos2(1)
+			Else
+				' Not enough stamina, return to main menu
+				TracePrint "Stamina isn't enough, back to main menu"
+				click(0) = pos3(0)
+				click(1) = pos3(1)
+				return_main_menu = 1
+			End if
+		End if
+		
+	ElseIf 1 = map_event_w_gate Then
+	
+		If 1 = enter_gate Then
+			If (stamina_now - stamina_require) >= 0 Then
+				' Enter the gate
+				TracePrint "Stamina is OK, gogogo"
+				click(0) = pos1(0)
+				click(1) = pos1(1)
+			Else
+				' Not enough stamina, return to main menu
+				TracePrint "Stamina isn't enough, back to main menu"
+				click(0) = pos3(0)
+				click(1) = pos3(1)
+				return_main_menu = 1
+			End if
+		Else
+			If (stamina_now - stamina_require) >= stamina_conserve Then
+				TracePrint "Stamina is OK, gogogo"
+				click(0) = pos1(0)
+				click(1) = pos1(1)
+			Else
+				' Not enough stamina, return to main menu
+				TracePrint "Stamina isn't enough, back to main menu"
+				click(0) = pos3(0)
+				click(1) = pos3(1)
+				return_main_menu = 1
+			End if
+		End if
+		
+	ElseIf 1 = map_event_wo_gate Then
+	
+		If (stamina_now - stamina_require) >= stamina_conserve Then
+			TracePrint "Stamina is OK, gogogo"
+			click(0) = pos1(0)
+			click(1) = pos1(1)
+		Else
+			' Not enough stamina, return to main menu
+			TracePrint "Stamina isn't enough, back to main menu"
+			click(0) = pos3(0)
+			click(1) = pos3(1)
+			return_main_menu = 1
+		End if
+		
+	ElseIf 1 = other_player Then
+	
+		click(0) = pos2(0)
+		click(1) = pos2(1)
+		
+	ElseIf 1 = friend_list Then
+
+		If 1 = use_friend Then
+			TracePrint "Use 1st friend"
+			click(0) = pos11(0)
+			click(1) = pos11(1)
+		Else
+			TracePrint "Don't use friend"
+			click(0) = pos10(0)
+			click(1) = pos10(1)
+		End if
+
+	ElseIf 1 = confirm_dialog Then
+	
+		click(0) = pos8(0)
+		click(1) = pos8(1)
+		
+	ElseIf 1 = elixir_dialog Then
+
+		click(0) = pos9(0)
+		click(1) = pos9(1)
+		need_return = 1
+		
+	ElseIf 1 = other_message Then
+	
+		click(0) = pos1(0)
+		click(1) = pos1(1)
+		
+	End if
+	
+	fork = "O"
+	If 1 = err Then
+		fork = "E"
+	ElseIf 1 = return_main_menu Then
+		fork = "R"
+	ElseIf 1 = return_mission_menu Then
+		fork = "M"
+	ElseIf 1 = need_return
+		fork = "NR"
+	End if
+	
+	Rem fork_end
+	
+	ReleaseCapture
+
+End Function

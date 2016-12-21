@@ -23,7 +23,8 @@ Dim iPosReidooburiHP,iClickNone,iPosStart,iClickStart
 Dim iPosMainMenu,iPosMainHome,iClickMainHome,iPosMainBattleP,iClickSkip,iPosMainBattle,iClickMainBattle,iPosMenuBattleHome,iClickMenuBattleHome
 Dim iPosMenuBattleP,iPosChooseOpponent,iClickChooseOpponent
 Dim iPosMenuBattle,iPosBattleList,iPosBattleListHome,iClickBattleListHome,iPosYes,iClickYes,iPosNo,iClickNo
-Dim iPosChoose,iPosOk,iClickOk,iClickSysOk
+Dim iPosChoose,iPosOk,iClickOk
+Dim iClickSysWrn1, iClickSysWrn2, iClickSysWrn3
 Dim iClickMainSynergisme,iPosMenuSynergisme,iPosMenuSynergismeP,iPosMenuSynergismePMax,iPosReidooburiSeach,iClickReidooburiSeach
 Dim iPosSynergismeList,iClickSynergismeList,iPosSynergismeGift,iClickSynergismeGift
 Dim iPosMenuSynergismeListMenu,iPosSimpleSynergisme,iClickSimpleSynergisme,iPosMissionList,iClickMissionList,iPosMissionContinue
@@ -47,6 +48,16 @@ Dim RLcount, RDcount
 Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
 /////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Dim stamina_conserve, stamina_max, select_map, use_friend, enter_gate, explore_flag
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+Import "SGSEXP.mql"
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
 // 2016/10/29 aboutmetal
 
 Log.Open 'Open log file
@@ -55,12 +66,14 @@ Log.Open 'Open log file
 Import "CmdAM.mql"
 Import "CmdSGS.mql"
 
+/////////////////////////////////////////////////////
 // Variables that function Taisen needs
-Dim imode, idebug, win_chance, posBattle(3)
+// 2016/12/10 aboutmetal: add igroup_battle
+Dim imode, idebug, win_chance, posBattle(3), igroup_battle
 imode = 1
 idebug = 0
 win_chance = 0.95
-
+igroup_battle = 0
 // Initialize libs
 btmp = CmdAM.Initial()
 btmp = CmdSGS.Initial()
@@ -206,7 +219,9 @@ iPosChoose = Array(320,155)
 
 iPosOk = Array(615,500)
 iClickOk = Array(615,500)
-iClickSysOk = Array(640, 410)
+iClickSysWrn1 = Array(640, 370)
+iClickSysWrn2 = Array(640, 410)
+iClickSysWrn3 = Array(640, 460)
 
 //Synergisme
 iPosMainExploreP = Array(890,669)
@@ -258,7 +273,7 @@ End If
 tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)
 RunApp "com.square_enix.ocsd.magical"
-ShowMessage "≥ı ºªØÕÍ≥…"
+ShowMessage "ÂàùÂßãÂåñÂÆåÊàê"
 Delay 10000
 Rem CIFMM
 
@@ -288,35 +303,35 @@ If ReadUIConfig("iRedFlag")=true then
 End If
 If ReadUIConfig("PunchPower")=true then
     PunchPower = 1
-    TracePrint "»´¡¶4±∂π•ª˜"
+    TracePrint "ÂÖ®Âäõ4ÂÄçÊîªÂáª"
 	Else 
     PunchPower = 0
-   TracePrint  "Õ®≥£π•ª˜"
+   TracePrint  "ÈÄöÂ∏∏ÊîªÂáª"
 End If
 If ReadUIConfig("DogeMode")=true then
     DogeMode = 1
-    TracePrint "–„∂˜∞Æ"
+    TracePrint "ÁßÄÊÅ©Áà±"
 	Else 
     DogeMode = 0
-    TracePrint  "∞Æª§∂ØŒÔ"
+    TracePrint  "Áà±Êä§Âä®Áâ©"
 End If
 If ReadUIConfig("sLevel")=0 then
-	ShowMessage "µ±«∞—°‘ÒŒ™≤ªΩ¯–––≠¡¶’Ω"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©‰∏∫‰∏çËøõË°åÂçèÂäõÊàò"
 	sLevel = 0
 ElseIf ReadUIConfig("sLevel") = 1 Then
 	sLevel = 1
-	ShowMessage "µ±«∞—°‘Òµƒƒ—∂» «≥ıº∂"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©ÁöÑÈöæÂ∫¶ÊòØÂàùÁ∫ß"
 ElseIf ReadUIConfig("sLevel") = 2 Then
 	sLevel = 2
-	ShowMessage "µ±«∞—°‘Òµƒƒ—∂» «÷–º∂"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©ÁöÑÈöæÂ∫¶ÊòØ‰∏≠Á∫ß"
 ElseIf ReadUIConfig("sLevel") = 3 Then
 	sLevel = 3
-	ShowMessage "µ±«∞—°‘Òµƒƒ—∂» «…œº∂"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©ÁöÑÈöæÂ∫¶ÊòØ‰∏äÁ∫ß"
 ElseIf ReadUIConfig("sLevel") = 4 Then
 	sLevel = 4
-	ShowMessage "µ±«∞—°‘Òµƒƒ—∂» «≥¨º∂"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©ÁöÑÈöæÂ∫¶ÊòØË∂ÖÁ∫ß"
 ElseIf ReadUIConfig("sLevel")=5 then
-	ShowMessage "µ±«∞—°‘Òµƒƒ—∂» «≥¨ÂÛº∂"
+	ShowMessage "ÂΩìÂâçÈÄâÊã©ÁöÑÈöæÂ∫¶ÊòØË∂ÖÂº©Á∫ß"
 	sLevel = 5
 End If
 If ReadUIConfig("Cycles") = 0 Then 
@@ -350,12 +365,60 @@ Helper = 2
 Cycles = 30
 iRedFlag = 0
 */
+/////////////////////////////////////////////////////
+// 2016/12/10 aboutmetal
+If ReadUIConfig("group_battle") = 0 Then 
+	igroup_battle = 0
+ElseIf ReadUIConfig("group_battle") = 1 Then
+	igroup_battle = 1
+End If
+/////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+If ReadUIConfig("explore_flag") = true then
+    explore_flag = 1 
+Else
+    explore_flag = 0
+End If
+
+btmp = ReadUIConfig("stamina_conserve", "0")
+stamina_conserve = CInt(btmp)
+
+btmp = ReadUIConfig("stamina_max", "0")
+stamina_max = CInt(btmp)
+
+If ReadUIConfig("select_map") = 0 Then 
+	select_map = 0
+ElseIf ReadUIConfig("select_map") = 1 Then
+	select_map = 1
+ElseIf ReadUIConfig("select_map") = 2 Then
+	select_map = 2
+End If
+
+If ReadUIConfig("use_friend") = true then
+    use_friend = 1 
+Else
+    use_friend = 0
+End If
+
+If ReadUIConfig("enter_gate") = true then
+    enter_gate = 1 
+Else
+    enter_gate = 0
+End If
+/////////////////////////////////////////////////////
 //reset anything
 If Retry > RSAT Then 
     If sReset = 0 Then
     	EndScript
     End If
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
+    KeyPress 4
+    Delay 1000
 	KillApp "com.square_enix.ocsd.magical"
     Delay 10000
     RunApp "com.square_enix.ocsd.magical"
@@ -389,9 +452,6 @@ If btmp = 0 Then
         Delay 500
     Next
     fTap(iClickOk(0), iClickOk(1), iRot, rScale)
-    Delay 500
-    fTap(iClickSysOk(0), iClickSysOk(1), iRot, rScale)
-    Delay 500
     Delay 1000
     Retry=Retry+1
     Goto Refresh
@@ -483,7 +543,7 @@ Else
 	// posBattle(0),(1) is the position, just click it
 	// posBattle(2) is the rank of your enemy
 	// posBattle(3) is whether if this enemy has event bonus
-	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, idebug, posBattle)
+	btmp = CmdSGS.Taisen(imode, iRot, rScale, win_chance, igroup_battle, idebug, posBattle)
 	traceprint btmp
 	If btmp = 0 Then
 		Goto Refresh
@@ -496,6 +556,8 @@ Else
 	traceprint posBattle(0), posBattle(1)
 	fTap (posBattle(0), posBattle(1), iRot, rScale)
 End If
+
+/////////////////////////////////////////////////////
 
 Delay 200
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
@@ -520,6 +582,18 @@ End If
 
 // Check Synergism Battle Mode
 If sLevel = 0 Then 
+
+/////////////////////////////////////////////////////
+// 2016/12/08 aboutmetal
+If 1 = explore_flag Then
+	Delay 3000 ' Delay longer to avoid message covering game UI
+	TracePrint "Auto explore"
+	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate) Then
+		Goto Refresh
+	End if
+End If
+/////////////////////////////////////////////////////
+
 	Goto Wait
 End If
 //EnterSynergismeMenu
@@ -680,9 +754,9 @@ TracePrint sPosLv1(1)
 			btmp = fCmpColor(iPosLv1(0), sPosLv1(1), sColorLv1, 1, iRot, rScale)
 				if btmp = -1 then
     				iLv1 = 0
-    				TracePrint "≤ª «∞◊…´"
+    				TracePrint "‰∏çÊòØÁôΩËâ≤"
 				Else
-    				TracePrint " «∞◊…´!"
+    				TracePrint "ÊòØÁôΩËâ≤!"
     				iLv1 = iLv1 + 1
 				End If
 			
@@ -949,10 +1023,9 @@ CmdAM.CountDown(Cycles, 2000, 2000, iRot, rScale)
 /////////////////////////////////////////////////////
 
 //Refresh
-TracePrint "Refresh"
 Rem Refresh
+TracePrint "Refresh"
 fTap(iClickMainHome(0), iClickMainHome(1), iRot, rScale)
-Delay 10
 Delay 1000
 RLcount = 0
 Goto CIFMM

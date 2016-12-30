@@ -82,6 +82,8 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 		Goto select_mission_end
 	End if
 	
+	Delay 3000
+	
 	KeepCapture
 	result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	           			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)

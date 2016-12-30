@@ -356,14 +356,14 @@ ElseIf ReadUIConfig("Helper") = 2 Then
 End If
 
 /*
-iPutFlag = 0
-DogeMode = 0
+iPutFlag = 1
+DogeMode = 1
 sLevel = 4
 imode=1
 PunchPower = 0
 Helper = 2
 Cycles = 30
-iRedFlag = 0
+iRedFlag = 1
 */
 /////////////////////////////////////////////////////
 // 2016/12/10 aboutmetal
@@ -771,6 +771,7 @@ TracePrint sPosLv1(1)
 	Loop
 	isDoge = 1
 	TracePrint "Is Doge!!"
+	ShowMessage " Doge!!"
 End If
 
 //fight
@@ -802,9 +803,10 @@ End If
 //FullPunch
 Rem FullP
 TracePrint "FullPunch"
+Delay 1000
 fTap (iClick3PBattle(0), iClick3PBattle(1), iRot, rScale)
-Touch 0, 0, 1000
-Touch 0, 0, 1000
+Delay 400
+fTap (iClick3PBattle(0), iClick3PBattle(1), iRot, rScale)
 Delay 1400
 If Helper = 1 Then 
 	fTap(iClickOnePBattle(0), iClickOnePBattle(1), iRot, rScale)
@@ -812,11 +814,16 @@ If Helper = 1 Then
 ElseIf Helper = 2 Then 
 	fTap(iClickFisrtHeler(0), iClickFisrtHeler(1), iRot, rScale)
 	Delay 800
+Else 
 End If
 fTap(iClickNoHelpSynergisme(0), iClickNoHelpSynergisme(1), iRot, rScale)
 Delay 1500
-fTap(iClickYes(0), iClickYes(1), iRot, rScale)
-Delay 1500
+fTap iClickYes(0), iClickYes(1), iRot, rScale
+TracePrint "click yes"
+Delay 100
+fTap iClickYes(0), iClickYes(1), iRot, rScale
+TracePrint "click yes"
+Delay 500
 Goto CHSP
 
 //oneP flight
@@ -834,7 +841,7 @@ End If
 fTap(iClickNoHelpSynergisme(0), iClickNoHelpSynergisme(1), iRot, rScale)
 Delay 1500
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
-Delay 1500
+Delay 3000
 
 
 //checkHaveSynergismeP
@@ -856,6 +863,7 @@ ElseIf PunchPower = 1 Then
 	Delay 3000
 	fTap(iClickNo(0), iClickNo(1), iRot, rScale)
 	Delay 1000
+	Goto  Refresh
 	End If
 End If
 

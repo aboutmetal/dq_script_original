@@ -154,9 +154,6 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	End If
 	
 	Rem select_mission_end
-	If "U" = select_mission Then
-		select_mission = "E"
-	End if
 	
 End function
 

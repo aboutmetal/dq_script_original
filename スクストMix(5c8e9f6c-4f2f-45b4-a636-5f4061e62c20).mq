@@ -273,7 +273,7 @@ End If
 tRSAT = ReadUIConfig("iRSAT", "5")
 RSAT = CInt(tRSAT)
 RunApp "com.square_enix.ocsd.magical"
-ShowMessage "åˆå§‹åŒ–å®Œæˆ"
+ShowMessage "³õÊ¼»¯Íê³É"
 Delay 10000
 Rem CIFMM
 
@@ -303,35 +303,35 @@ If ReadUIConfig("iRedFlag")=true then
 End If
 If ReadUIConfig("PunchPower")=true then
     PunchPower = 1
-    TracePrint "å…¨åŠ›4å€æ”»å‡»"
+    TracePrint "È«Á¦4±¶¹¥»÷"
 	Else 
     PunchPower = 0
-   TracePrint  "é€šå¸¸æ”»å‡»"
+   TracePrint  "Í¨³£¹¥»÷"
 End If
 If ReadUIConfig("DogeMode")=true then
     DogeMode = 1
-    TracePrint "ç§€æ©çˆ±"
+    TracePrint "Ğã¶÷°®"
 	Else 
     DogeMode = 0
-    TracePrint  "çˆ±æŠ¤åŠ¨ç‰©"
+    TracePrint  "°®»¤¶¯Îï"
 End If
 If ReadUIConfig("sLevel")=0 then
-	ShowMessage "å½“å‰é€‰æ‹©ä¸ºä¸è¿›è¡ŒååŠ›æˆ˜"
+	ShowMessage "µ±Ç°Ñ¡ÔñÎª²»½øĞĞĞ­Á¦Õ½"
 	sLevel = 0
 ElseIf ReadUIConfig("sLevel") = 1 Then
 	sLevel = 1
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯åˆçº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³õ¼¶"
 ElseIf ReadUIConfig("sLevel") = 2 Then
 	sLevel = 2
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸­çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÖĞ¼¶"
 ElseIf ReadUIConfig("sLevel") = 3 Then
 	sLevel = 3
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯ä¸Šçº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇÉÏ¼¶"
 ElseIf ReadUIConfig("sLevel") = 4 Then
 	sLevel = 4
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬¼¶"
 ElseIf ReadUIConfig("sLevel")=5 then
-	ShowMessage "å½“å‰é€‰æ‹©çš„éš¾åº¦æ˜¯è¶…å¼©çº§"
+	ShowMessage "µ±Ç°Ñ¡ÔñµÄÄÑ¶ÈÊÇ³¬åó¼¶"
 	sLevel = 5
 End If
 If ReadUIConfig("Cycles") = 0 Then 
@@ -356,14 +356,14 @@ ElseIf ReadUIConfig("Helper") = 2 Then
 End If
 
 /*
-iPutFlag = 0
-DogeMode = 0
+iPutFlag = 1
+DogeMode = 1
 sLevel = 4
 imode=1
 PunchPower = 0
 Helper = 2
 Cycles = 30
-iRedFlag = 0
+iRedFlag = 1
 */
 /////////////////////////////////////////////////////
 // 2016/12/10 aboutmetal
@@ -452,6 +452,7 @@ If btmp = 0 Then
         Delay 500
     Next
     fTap(iClickOk(0), iClickOk(1), iRot, rScale)
+    Delay 500
     Delay 1000
     Retry=Retry+1
     Goto Refresh
@@ -754,9 +755,9 @@ TracePrint sPosLv1(1)
 			btmp = fCmpColor(iPosLv1(0), sPosLv1(1), sColorLv1, 1, iRot, rScale)
 				if btmp = -1 then
     				iLv1 = 0
-    				TracePrint "ä¸æ˜¯ç™½è‰²"
+    				TracePrint "²»ÊÇ°×É«"
 				Else
-    				TracePrint "æ˜¯ç™½è‰²!"
+    				TracePrint "ÊÇ°×É«!"
     				iLv1 = iLv1 + 1
 				End If
 			
@@ -770,6 +771,7 @@ TracePrint sPosLv1(1)
 	Loop
 	isDoge = 1
 	TracePrint "Is Doge!!"
+	ShowMessage " Doge!!"
 End If
 
 //fight
@@ -801,9 +803,10 @@ End If
 //FullPunch
 Rem FullP
 TracePrint "FullPunch"
+Delay 1000
 fTap (iClick3PBattle(0), iClick3PBattle(1), iRot, rScale)
-Touch 0, 0, 1000
-Touch 0, 0, 1000
+Delay 400
+fTap (iClick3PBattle(0), iClick3PBattle(1), iRot, rScale)
 Delay 1400
 If Helper = 1 Then 
 	fTap(iClickOnePBattle(0), iClickOnePBattle(1), iRot, rScale)
@@ -811,11 +814,16 @@ If Helper = 1 Then
 ElseIf Helper = 2 Then 
 	fTap(iClickFisrtHeler(0), iClickFisrtHeler(1), iRot, rScale)
 	Delay 800
+Else 
 End If
 fTap(iClickNoHelpSynergisme(0), iClickNoHelpSynergisme(1), iRot, rScale)
 Delay 1500
-fTap(iClickYes(0), iClickYes(1), iRot, rScale)
-Delay 1500
+fTap iClickYes(0), iClickYes(1), iRot, rScale
+TracePrint "click yes"
+Delay 100
+fTap iClickYes(0), iClickYes(1), iRot, rScale
+TracePrint "click yes"
+Delay 500
 Goto CHSP
 
 //oneP flight
@@ -833,7 +841,7 @@ End If
 fTap(iClickNoHelpSynergisme(0), iClickNoHelpSynergisme(1), iRot, rScale)
 Delay 1500
 fTap(iClickYes(0), iClickYes(1), iRot, rScale)
-Delay 1500
+Delay 3000
 
 
 //checkHaveSynergismeP
@@ -855,6 +863,7 @@ ElseIf PunchPower = 1 Then
 	Delay 3000
 	fTap(iClickNo(0), iClickNo(1), iRot, rScale)
 	Delay 1000
+	Goto  Refresh
 	End If
 End If
 

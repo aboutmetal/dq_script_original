@@ -388,6 +388,11 @@ stamina_conserve = CInt(btmp)
 btmp = ReadUIConfig("stamina_max", "0")
 stamina_max = CInt(btmp)
 
+If stamina_max < stamina_conserve and stamina_conserve > 0 Then 
+	ShowMessage "体力上限不能低于下限！"
+	EndScript
+End If
+
 If ReadUIConfig("select_map") = 0 Then 
 	select_map = 0
 ElseIf ReadUIConfig("select_map") = 1 Then

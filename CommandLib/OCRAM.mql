@@ -22,7 +22,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     ' circle: the circle (hole) number for each contour (inner contour number)
     Dim cha_index(), border(), circle()
 
-    Dim ix1, iy1, ix2, iy2, height, width, s_height, s_width
+    Dim ix1, iy1, ix2, iy2, height, width, s_height, s_width, m_height, m_width
 
     ' direction: the 8 directions (nearest neighborhoods) around one point, for calculating the bakcground filling number
     Dim direction = Array(Array(-1,-1,0,1,1,1,0,-1),Array(0,-1,-1,-1,0,1,1,1))
@@ -33,7 +33,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     Dim left_open, right_open, left_up_open, left_up_open2, left_down_open, left_down_open2, left_up_close
     Dim i, j, ih, iw, iih, iiw, icontour, mcontour
     Dim itemp, temp(), err
-    Dim strOutput, result
+    Dim strOutput, result, tmp1, tmp2
     Dim tick1, tick2, tick0, tickflag
 
     '-----------------------------------------------------------------------
@@ -127,6 +127,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     ' Find contours
 
     icontour = 1
+    m_height = 0
 
     ' Avoid boundaries
     For ih = 1 to height - 2
@@ -146,6 +147,10 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                     find_contour("out", iw, ih, width, height, bicolor_matrix, contour_matrix, temp)
                     'TracePrint "Finish new contour"
                     'EndScript
+                    'TracePrint temp(3) - temp(1)
+                    If m_height < (temp(3) - temp(1)) Then 
+                    	m_height = temp(3) - temp(1)
+                    End If
                     For itemp = 0 to 3
                         border((icontour-1) * 4 + itemp) = temp(itemp)
                     Next
@@ -187,11 +192,21 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     '-----------------------------------------------------------------------
     ' Now border(), circle() has stored the border and circle number for every contour
     ' Sorting contours from left to right, make sure the i-th contour is the i-th character
+    ' Ignore too small contours, which maybe the background noise
     ' cha_index will store the sort result
 
-    For i = 0 to mcontour - 1
-        cha_index(i) = i
+	icontour = 0
+    For i = 0 To mcontour - 1
+    	If (border(i*4+3) - border(i*4+1)) > m_height * 0.7 Then 
+    		' Ignore small pieces
+    		cha_index(icontour) = i
+    		icontour = icontour + 1
+    	End If
     Next
+    If mcontour <> icontour Then
+    	TracePrint "Ignore", mcontour - icontour, "small fragments"
+    	mcontour = icontour
+    End if
 
     ' Bubble sorting
     For i = 0 to mcontour - 2
@@ -267,6 +282,19 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                 count(fill_matrix(ih * s_width + iw)) = count(fill_matrix(ih * s_width + iw)) + 1
             Next
         Next
+        
+        'TracePrint "Contour:",icontour
+        'For ih = 0 To s_height
+        '	tmp1 = ""
+        '	For iw = 0 To s_width
+        '		If 253 = fill_matrix(ih * s_width + iw) Then 
+        '			tmp1 = tmp1 & "Ò»"
+        '		Else 
+        '			tmp1 = tmp1 & "¿Ú"
+        '		End If
+        '	Next
+        '	TracePrint tmp1
+        'Next
 		
 		' 8 directions:
         ' 2 3 4
@@ -307,7 +335,8 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
         left_up_open2   = count(253) / (s_height+1) / (s_width+1)
         left_down_open  = count(62)  / (s_height+1) / (s_width+1)
         left_down_open2 = count(127) / (s_height+1) / (s_width+1)
-        left_up_close   = count(7)   / (s_height+1) / (s_width+1)
+        left_up_close = count(7) / (s_height + 1) / (s_width + 1)
+        'TracePrint left_up_open2
 	
         ' Recognition
 	
@@ -332,23 +361,23 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             End If
         ElseIf 0 = circle(cha_index(icontour-1)) Then
             ' No circle, 1, 2, 3, 5 or 7
-            If     left_open <= 0.01 and right_open <= 0.01 and left_up_close <= 0.01 Then
+            If     left_open <= 0.04 and right_open <= 0.04 and left_up_close <= 0.04 Then
                 result = "1"
-            ElseIf left_open <= 0.01 and right_open <= 0.01 and left_up_close >  0.01 Then
+            ElseIf left_open <= 0.04 and right_open <= 0.04 and left_up_close >  0.04 Then
             	result = "/" ' Recoginise slash (not backslash)
-            ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2 <= 0.01 Then
+            ElseIf left_open  > 0.04 and right_open  > 0.04 and left_down_open2  > 0.04 and left_up_open2 <= 0.04 Then
                 ' Rely on the font
                 result = "2"
             'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
-			ElseIf left_open  > 0.01 and left_up_close <= 0.1 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
+			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2  > 0.04 and left_up_open2  > 0.04 Then
                 ' Rely on the font
                 result = "3"
             'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2 <= 0.01 Then
-			ElseIf left_open  > 0.01 and left_up_close <= 0.1 and left_down_open2 <= 0.01 Then
+			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2 <= 0.04 Then
                 ' Rely on the font
                 result = "5"
             'ElseIf left_open  > 0.01 and right_open <= 0.01 Then
-			ElseIf left_open  > 0.01 and left_up_close  > 0.1 Then
+			ElseIf left_open  > 0.04 and left_up_close  > 0.1 Then
                 result = "7"
             Else
                 err = 1

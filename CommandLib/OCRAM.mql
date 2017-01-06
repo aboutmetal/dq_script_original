@@ -128,6 +128,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
 
     icontour = 1
     m_height = 0
+    m_width = 0
 
     ' Avoid boundaries
     For ih = 1 to height - 2
@@ -148,9 +149,18 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                     'TracePrint "Finish new contour"
                     'EndScript
                     'TracePrint temp(3) - temp(1)
-                    If m_height < (temp(3) - temp(1)) Then 
-                    	m_height = temp(3) - temp(1)
+                    'TracePrint temp(2) - temp(0)
+                    s_height = temp(3) - temp(1)
+                    s_width  = temp(2) - temp(0)
+                    If s_height / s_width <= 5 and s_height / s_width >= 1.2 Then
+                    	If m_height < s_height Then 
+                    		m_height = s_height
+                    	End If
+                    	If m_width < s_width Then 
+                    		m_width = s_width
+                    	End If
                     End If
+                    
                     For itemp = 0 to 3
                         border((icontour-1) * 4 + itemp) = temp(itemp)
                     Next
@@ -174,6 +184,8 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             End If	
         Next
     Next
+    
+    'TracePrint m_height, m_width
 
     If 1 = tickflag Then
         tick2 = TickCount()
@@ -197,14 +209,17 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
 
 	icontour = 0
     For i = 0 To mcontour - 1
-    	If (border(i*4+3) - border(i*4+1)) > m_height * 0.7 Then 
+    	s_height = border(i * 4 + 3) - border(i * 4 + 1)
+    	s_width  = border(i * 4 + 2) - border(i * 4 + 0)
+    	If s_height >= m_height * 0.7 and s_height <= m_height and _
+    	   s_height / s_width <= 5 and s_height / s_width >= 1.2 Then 
     		' Ignore small pieces
     		cha_index(icontour) = i
     		icontour = icontour + 1
     	End If
     Next
     If mcontour <> icontour Then
-    	TracePrint "Ignore", mcontour - icontour, "small fragments"
+    	TracePrint "Ignore", mcontour - icontour, "fragments"
     	mcontour = icontour
     End if
 
@@ -254,7 +269,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             For iw = 0 to s_width
                 j = iw + border(cha_index(icontour-1) * 4)
 			
-                If 1 = bicolor_matrix(i * width + j) Then
+                If cha_index(icontour-1)+1 = contour_matrix(i * width + j) Then
                 ' If one point is painted, its bgd filling number = 0
                     fill_matrix(ih * s_width + iw) = 0
                 Else
@@ -264,7 +279,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                         iih = ih + direction(1, idirection)
                         While iiw >=0 and iiw <= s_width and iih >=0 and iih <= s_height
                             ' Check boundaries
-                            If 1 = bicolor_matrix((i-ih+iih) * width + j-iw+iiw) Then
+                            If cha_index(icontour-1)+1 = contour_matrix((i-ih+iih) * width + j-iw+iiw) Then
                                 fill_matrix(ih * s_width + iw) = fill_matrix(ih * s_width + iw) + 2 ^ idirection
                                 ' The bgd filling number for each point is presented with a 8-bit binary number
 								' One bit for one direction
@@ -283,11 +298,11 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             Next
         Next
         
-        'TracePrint "Contour:",icontour
+        'TracePrint "Contour:",icontour, cha_index(icontour-1)
         'For ih = 0 To s_height
         '	tmp1 = ""
         '	For iw = 0 To s_width
-        '		If 253 = fill_matrix(ih * s_width + iw) Then 
+        '		If 0 = fill_matrix(ih * s_width + iw) Then 
         '			tmp1 = tmp1 & "Ò»"
         '		Else 
         '			tmp1 = tmp1 & "¿Ú"
@@ -335,7 +350,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
         left_up_open2   = count(253) / (s_height+1) / (s_width+1)
         left_down_open  = count(62)  / (s_height+1) / (s_width+1)
         left_down_open2 = count(127) / (s_height+1) / (s_width+1)
-        left_up_close = count(7) / (s_height + 1) / (s_width + 1)
+        left_up_close   = count(7) / (s_height + 1) / (s_width + 1)
         'TracePrint left_up_open2
 	
         ' Recognition
@@ -387,7 +402,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
         End If	
 
         If 1 = err Then
-            result = "0"
+            result = ""
             TracePrint "Unknown", circle(cha_index(icontour-1))
             TracePrint left_up_open2
             TracePrint left_open, right_open
@@ -522,12 +537,14 @@ Function find_contour(strInput, w0, h0, width, height, bicolor_matrix, contour_m
         If "out" = strInput Then
             If iw < temp(0) Then
                 temp(0) = iw
-            ElseIf iw > temp(2) Then
+            End if
+            If iw > temp(2) Then
                 temp(2) = iw
             End If
             If ih < temp(1) Then
                 temp(1) = ih
-            ElseIf ih > temp(3) Then
+            End if
+            If ih > temp(3) Then
                 temp(3) = ih
             End If
         End If

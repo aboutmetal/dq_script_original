@@ -13,19 +13,20 @@ Dim pos_gate_timer_center, pos_gate_timer_top_right
 Dim pos_friend_list_nofriend, pos_friend_list_1stfriend
 Dim pos_mapselection_border
 
-Dim color_red, color_orange, color_orange2, color_orange3, color_white
+Dim color_red, color_orange, color_orange2, color_orange3, color_darkyellow, color_white
 Dim color_purple, color_purple2, color_purple3, color_blue, color_green
 
-color_red							= "2B2BF7-090909"	' Button
-color_orange						= "3B8CF5-090909"	' Button
-color_orange2						= "22A4FF-090909"	' Mission UI, top left, background of player level
+color_red							= "2B2BF7-090909"	' Button color, foreground
+color_orange						= "3B8CF5-090909"	' Button color, foreground
+color_orange2						= "22A4FF-090909"	' UI color at top left, below player level, foreground
 color_orange3						= "3FCBFE-272027"	' Stamina overflow (when levelup)
-color_purple						= "F53AA2-091009"	' Button
-color_purple2						= "7A1D51-091009"	' Button in back layer (darker)
+color_darkyellow					= "115280-090909"	' UI color at top left, below player level, background
+color_purple						= "F53AA2-091009"	' Button color, foreground
+color_purple2						= "7A1D51-091009"	' Button color, background
 color_purple3						= "FC23D6-090909"	' Monster HP bar
-color_blue							= "FF3132-090909"	' Timer background
+color_blue							= "FF3132-090909"	' Timer icon color
 color_white							= "FFFFFF-272727"	' Common color for digits
-color_green							= "43FF53-090909"	' Button (when another player appears)
+color_green							= "43FF53-090909"	' Button color, foreground
 
 pos_OCR_stamina_mainmenu			= Array( 835, 680,  902, 708)
 pos_OCR_bottom_center				= Array( 723, 667,  775, 696)
@@ -46,9 +47,9 @@ pos_friend_list_nofriend			= Array( 198, 148)
 pos_friend_list_1stfriend			= Array( 198, 346)
 pos_mapselection_border				= Array( 255, 210)
 
-Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate)
+Function select_mission(iRot, rScale, stamina_conserve, stamina_max, stamina_full, select_map, use_friend, enter_gate)
 
-	Dim stamina_now
+	Dim stamina_now, stamina_tmp
 	Dim result, explore_status, tmp
 	
 	select_mission = "U"
@@ -68,7 +69,7 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	ReleaseCapture
 
 	stamina_now = Cint(result)
-	TracePrint "Stamina now:",stamina_now
+	TracePrint "Stamina now (OCR, mainmenu):",stamina_now
 	
 	If stamina_now < stamina_max Then
 		select_mission = "O"
@@ -87,7 +88,8 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	
 	Delay 2000
 	
-	KeepCapture
+	KeepCapture 
+	
 	result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	           			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
 	tmp = Split(result, "/")
@@ -100,11 +102,19 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	    tmp = Split(result, "/")
 	    TracePrint result
 	End If
-	ReleaseCapture 
 	
 	stamina_now = CInt(tmp(0))
-	TracePrint "Stamina now:",stamina_now
+	TracePrint "Stamina now (OCR, stamina bar):", stamina_now
 	
+	' read stamina by counting stamina bar length, then compare the result with OCR result
+	If "E" = check_stamina_bar(iRot, rScale, stamina_now, stamina_full) Then 
+		ReleaseCapture 
+		select_mission = "E"
+		Goto select_mission_end
+	End If
+	
+	ReleaseCapture 
+		
 	If stamina_now < stamina_max Then
 		select_mission = "O"
 		CmdAM.fTap(pos_button_top_right(0), pos_button_top_right(1), iRot, rScale)
@@ -152,7 +162,7 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	
 	End If
 		
-	explore_status = explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
+	explore_status = explore(iRot, rScale, stamina_conserve, stamina_full, use_friend, enter_gate)
 	select_mission = explore_status
 	If "E" = explore_status or "R" = explore_status or "NR" = explore_status Then
 		Goto select_mission_end
@@ -164,12 +174,11 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map,
 	
 End function
 
-Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
+Function explore(iRot, rScale, stamina_conserve, stamina_full, use_friend, enter_gate)
 
 	Dim pos_gogogo, pos_nextstep
-	Dim color1, color2, color3
-	Dim color_mem
-	Dim loop_count, loop_max, battle_count
+	Dim color1, color2, color3, color4
+	Dim loop_count, loop_max, battle_count, touchdown_status
 	Dim time_delay
 	Dim fork_status
 
@@ -181,17 +190,23 @@ Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
 	
 	loop_count = 0
 	battle_count = 0
+	touchdown_status = 0
 	Do While loop_count <= loop_max
 	
 		color1 = CmdAM.fCmpColor(pos_button_top_right(0), pos_button_top_right(1), color_purple, 1, iRot, rScale)
 		color2 = CmdAM.fCmpColor(pos_button_top_right(0), pos_button_top_right(1), color_purple2, 1, iRot, rScale)
 		color3 = CmdAM.fCmpColor(pos_top_left(0), pos_top_left(1), color_orange2, 1, iRot, rScale)
+		color4 = CmdAM.fCmpColor(pos_top_left(0), pos_top_left(1), color_darkyellow, 1, iRot, rScale)
 		'TracePrint fork_status, color1, color2
 		
 		If -1 <> color1 or -1 <> color2 Then 
 		' Top left corner is purple: an event appears
-			Delay 1000
-			fork_status = fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, pos_nextstep)
+			Delay time_delay
+			If 1 = touchdown_status Then 
+				TouchUp 233
+				touchdown_status = 0
+			End If
+			fork_status = fork(iRot, rScale, stamina_conserve, stamina_full, use_friend, enter_gate, pos_nextstep)
 			explore = fork_status
 			If "R" = fork_status or "M" = fork_status Then
 				CmdAM.fTap(pos_nextstep(0), pos_nextstep(1), iRot, rScale)
@@ -211,18 +226,25 @@ Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
 				loop_count = loop_count + 1
 			End If
 			battle_count = 0 ' It is not a battle, so reset counter
-		ElseIf -1 = color3 and 2 > battle_count Then
+		ElseIf -1 = color3 and -1 = color4 and 2 > battle_count Then
 		' color3 is not orange2: a battle starts, try to click bottom left to skip it
 		' only try clicking bottom left for 2 times, just in case of unexpected troubles
+			If 1 = touchdown_status Then 
+				TouchUp 233
+				touchdown_status = 0
+			End If
 			CmdAM.fTap(pos_button_bottom_right(0), pos_button_bottom_right(1), iRot, rScale)
 			Delay 1500
 			loop_count = loop_count + 4
 			battle_count = battle_count + 1
 		Else 
-			CmdAM.fTap(pos_gogogo(0), pos_gogogo(1), iRot, rScale)
+			If 0 = touchdown_status Then 
+				CmdAM.fTouchDown(pos_gogogo(0), pos_gogogo(1), 233, iRot, rScale)
+				touchdown_status = 1
+			End If
 			Delay time_delay
 			loop_count = loop_count + 1
-			If -1 <> color3 Then
+			If -1 <> color3 or -1 <> color4 Then
 				battle_count = 0 ' It is not a battle, so reset counter
 			End If
 		End if
@@ -235,7 +257,7 @@ Function explore(iRot, rScale, stamina_conserve, use_friend, enter_gate)
 
 End function
 
-Function fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, click)
+Function fork(iRot, rScale, stamina_conserve, stamina_full, use_friend, enter_gate, click)
 
 	Dim pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10, pos11
 	Dim result, tmp, stamina_require, stamina_now
@@ -378,20 +400,29 @@ Function fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, click)
 		result = OCRAM.digit(pos_OCR_bottom_center(0), pos_OCR_bottom_center(1), _
 	            			 pos_OCR_bottom_center(2), pos_OCR_bottom_center(3), color_white, iRot, rScale)
 	    stamina_require = Cint(result)
-	    TracePrint "Stamina require:",stamina_require
+	    TracePrint "Stamina require (OCR, button):",stamina_require
 	    
 		result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	            			 pos_OCR_stamina(2), pos_OCR_stamina(3), color_white, iRot, rScale)
 	    tmp = Split(result, "/")
+	    TracePrint result
+	    
 		If 0 = Cint(tmp(0)) Then
 			result = OCRAM.digit(pos_OCR_stamina(0), pos_OCR_stamina(1), _
 	            				 pos_OCR_stamina(2), pos_OCR_stamina(3), _
 	            				 color_orange3, iRot, rScale)
 	        tmp = Split(result, "/")
+	        TracePrint result
 		End If
-	    TracePrint result
+		
 	    stamina_now = Cint(tmp(0))
-	    TracePrint "Stamina now:",stamina_now
+	    TracePrint "Stamina now (OCR, stamina bar):", stamina_now
+	    
+	    ' read stamina by counting stamina bar length, then compare the result with OCR result
+		If "E" = check_stamina_bar(iRot, rScale, stamina_now, stamina_full) Then 
+			fork = "E"
+			Goto fork_end
+		End If
 	    
 	End if
 	
@@ -551,4 +582,61 @@ Function fork(iRot, rScale, stamina_conserve, use_friend, enter_gate, click)
 	
 	ReleaseCapture
 
+End Function
+
+Function check_stamina_bar(iRot, rScale, stamina_tocheck, stamina_full)
+	
+	Dim color_tmp, bar_st, bar_ed, r, b, g
+	Dim i, stamina_tmp, isuc
+	 
+	bar_st = -1
+	bar_ed = -1
+	i = 0
+	stamina_tmp = 0
+	isuc = 0
+	
+	Do While -1 = bar_st and 464 > i
+		color_tmp = CmdAM.fGetPixelColor(267 + i, 17, iRot, rScale)
+		ColorToRGB color_tmp, r, g, b
+		If 112 < r and 112 < g Then 
+			bar_st = 267 + i
+		End If
+		i = i + 1
+	Loop
+	Do While -1 = bar_ed and 464 > i
+		color_tmp = CmdAM.fGetPixelColor(267 + i, 17, iRot, rScale)
+		ColorToRGB color_tmp, r, g, b
+		If 112 >= r and 112 >= g Then 
+			bar_ed = 267 + i
+		End If
+		i = i + 1
+	Loop
+	
+	If -1 = bar_st and -1 = bar_ed Then 
+		TracePrint "Warning: cannot find stamina in stamina bar, maybe it's empty"
+		stamina_tmp = 0
+		isuc = 1
+	ElseIf -1 < bar_st and -1 = bar_ed Then
+		TracePrint "Error: cannot find the end of stamina bar"
+		isuc = 0
+	ElseIf -1 < bar_st and -1 < bar_ed Then
+		stamina_tmp = Int((bar_ed - bar_st) * stamina_full / (461 * rScale) + 0.5)
+		isuc = 1
+	Else 
+		TracePrint "Error: unknown error (check_stamina_bar)"
+		isuc = 0
+	End If
+	
+	If 1 = isuc Then 
+		TracePrint "Stamina now (from stamina bar):", stamina_tmp
+		If Abs(stamina_tmp - stamina_tocheck) > 3 Then 
+			TracePrint "Warning: OCR result differs from this result by", Abs(stamina_tmp - stamina_tocheck)
+			TracePrint "Use", stamina_tmp
+			stamina_tocheck = stamina_tmp
+		End If
+		check_stamina_bar = "O"
+	Else 
+		check_stamina_bar = "E"
+	End If
+	
 End Function

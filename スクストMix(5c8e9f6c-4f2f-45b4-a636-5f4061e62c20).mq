@@ -49,7 +49,7 @@ Dim sColorLv1,iPosLv1,iLv1,iDoge,isDoge,sPosLv1
 
 /////////////////////////////////////////////////////
 // 2016/12/08 aboutmetal
-Dim stamina_conserve, stamina_max, select_map, use_friend, enter_gate, explore_flag
+Dim stamina_conserve, stamina_max, stamina_full, select_map, use_friend, enter_gate, explore_flag
 /////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////
@@ -388,8 +388,18 @@ stamina_conserve = CInt(btmp)
 btmp = ReadUIConfig("stamina_max", "0")
 stamina_max = CInt(btmp)
 
+btmp = ReadUIConfig("stamina_full", "0")
+stamina_full = CInt(btmp)
+
 If stamina_max < stamina_conserve and stamina_conserve > 0 Then 
 	ShowMessage "体力上限不能低于下限！"
+	Delay 3000
+	EndScript
+End If
+
+If stamina_full <= 0 Then 
+	ShowMessage "请填写总体力！"
+	Delay 3000
 	EndScript
 End If
 
@@ -594,7 +604,8 @@ If sLevel = 0 Then
 If 1 = explore_flag Then
 	Delay 3000 ' Delay longer to avoid message covering game UI
 	TracePrint "Auto explore"
-	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, select_map, use_friend, enter_gate) Then
+	If "E" = SGSEXP.select_mission(iRot, rScale, stamina_conserve, stamina_max, stamina_full, select_map, use_friend, enter_gate) Then
+		TouchUp 233
 		Goto Refresh
 	End if
 End If

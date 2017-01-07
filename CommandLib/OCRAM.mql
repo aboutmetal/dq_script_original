@@ -152,7 +152,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                     'TracePrint temp(2) - temp(0)
                     s_height = temp(3) - temp(1)
                     s_width  = temp(2) - temp(0)
-                    If s_height / s_width <= 5 and s_height / s_width >= 1.2 Then
+                    If s_height / s_width <= 5 and s_height / s_width >= 1 Then
                     	If m_height < s_height Then 
                     		m_height = s_height
                     	End If
@@ -212,7 +212,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     	s_height = border(i * 4 + 3) - border(i * 4 + 1)
     	s_width  = border(i * 4 + 2) - border(i * 4 + 0)
     	If s_height >= m_height * 0.7 and s_height <= m_height and _
-    	   s_height / s_width <= 5 and s_height / s_width >= 1.2 Then 
+    	   s_height / s_width <= 5 and s_height / s_width >= 1 Then 
     		' Ignore small pieces
     		cha_index(icontour) = i
     		icontour = icontour + 1
@@ -380,15 +380,15 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                 result = "1"
             ElseIf left_open <= 0.04 and right_open <= 0.04 and left_up_close >  0.04 Then
             	result = "/" ' Recoginise slash (not backslash)
-            ElseIf left_open  > 0.04 and right_open  > 0.04 and left_down_open2  > 0.04 and left_up_open2 <= 0.04 Then
+            ElseIf left_open  > 0.04 and right_open  > 0.04 and left_down_open2  > 0.02 and left_up_open2 <= 0.02 Then
                 ' Rely on the font
                 result = "2"
             'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2  > 0.01 and left_up_open2  > 0.01 Then
-			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2  > 0.04 and left_up_open2  > 0.04 Then
+			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2  > 0.02 and left_up_open2  > 0.02 Then
                 ' Rely on the font
                 result = "3"
             'ElseIf left_open  > 0.01 and right_open  > 0.01 and left_down_open2 <= 0.01 Then
-			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2 <= 0.04 Then
+			ElseIf left_open  > 0.04 and left_up_close <= 0.1 and left_down_open2 <= 0.02 Then
                 ' Rely on the font
                 result = "5"
             'ElseIf left_open  > 0.01 and right_open <= 0.01 Then

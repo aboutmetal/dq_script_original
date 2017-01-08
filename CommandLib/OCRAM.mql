@@ -90,9 +90,9 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             For iw = 0 to width - 1
                 GetPixelRGB(iw + ix1, ih + iy1, R_orig, G_orig, B_orig)
                 If abs(R_orig - R_ctr) <= R_ofs and _
-			   abs(G_orig - G_ctr) <= G_ofs and _
-			   abs(B_orig - B_ctr) <= B_ofs _
-			Then
+			       abs(G_orig - G_ctr) <= G_ofs and _
+			       abs(B_orig - B_ctr) <= B_ofs _
+			    Then
                     bicolor_matrix(ih * width + iw) = 1
                 Else
                     bicolor_matrix(ih * width + iw) = 0
@@ -105,9 +105,9 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
             For iw = 0 to width - 1
                 GetPixelRGB(ix1 - ih, iw + iy1, R_orig, G_orig, B_orig)
                 If abs(R_orig - R_ctr) <= R_ofs and _
-			   abs(G_orig - G_ctr) <= G_ofs and _
-			   abs(B_orig - B_ctr) <= B_ofs _
-			Then
+			       abs(G_orig - G_ctr) <= G_ofs and _
+			       abs(B_orig - B_ctr) <= B_ofs _
+			    Then
                     bicolor_matrix(ih * width + iw) = 1
                 Else
                     bicolor_matrix(ih * width + iw) = 0
@@ -160,7 +160,6 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
                     		m_width = s_width
                     	End If
                     End If
-                    
                     For itemp = 0 to 3
                         border((icontour-1) * 4 + itemp) = temp(itemp)
                     Next
@@ -202,10 +201,11 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     End if
 
     '-----------------------------------------------------------------------
-    ' Now border(), circle() has stored the border and circle number for every contour
-    ' Sorting contours from left to right, make sure the i-th contour is the i-th character
-    ' Ignore too small contours, which maybe the background noise
-    ' cha_index will store the sort result
+    ' Now border(), circle() has stored the border and circle number for every contour.
+    ' Sorting contours from left to right, make sure the i-th contour is the i-th character.
+    ' Ignore strange contours, which are too small or have strange aspect ratio, 
+	' because they maybe the background noise.
+    ' Finally, cha_index will store the sort result.
 
 	icontour = 0
     For i = 0 To mcontour - 1
@@ -213,7 +213,7 @@ Function digit(x1, y1, x2, y2, BGR_thr, rotate, scale)
     	s_width  = border(i * 4 + 2) - border(i * 4 + 0)
     	If s_height >= m_height * 0.7 and s_height <= m_height and _
     	   s_height / s_width <= 5 and s_height / s_width >= 1 Then 
-    		' Ignore small pieces
+    		' Ignore contours
     		cha_index(icontour) = i
     		icontour = icontour + 1
     	End If

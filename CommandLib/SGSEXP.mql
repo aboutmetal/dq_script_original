@@ -107,10 +107,13 @@ Function select_mission(iRot, rScale, stamina_conserve, stamina_max, stamina_ful
 	TracePrint "Stamina now (OCR, stamina bar):", stamina_now
 	
 	' read stamina by counting stamina bar length, then compare the result with OCR result
-	If "E" = check_stamina_bar(iRot, rScale, stamina_now, stamina_full) Then 
+	result = check_stamina_bar(iRot, rScale, stamina_now, stamina_full)
+	If "E" = result Then 
 		ReleaseCapture 
 		select_mission = "E"
 		Goto select_mission_end
+	Else
+		stamina_now = CInt(result)
 	End If
 	
 	ReleaseCapture 
@@ -441,9 +444,12 @@ Function fork(iRot, rScale, stamina_conserve, stamina_full, use_friend, enter_ga
 	    TracePrint "Stamina now (OCR, stamina bar):", stamina_now
 	    
 	    ' read stamina by counting stamina bar length, then compare the result with OCR result
-		If "E" = check_stamina_bar(iRot, rScale, stamina_now, stamina_full) Then 
+		result = check_stamina_bar(iRot, rScale, stamina_now, stamina_full)
+		If "E" = result Then 
 			fork = "E"
 			Goto fork_end
+		Else
+			stamina_now = CInt(result)
 		End If
 	    
 	End if
@@ -656,7 +662,7 @@ Function check_stamina_bar(iRot, rScale, stamina_tocheck, stamina_full)
 			TracePrint "Use", stamina_tmp
 			stamina_tocheck = stamina_tmp
 		End If
-		check_stamina_bar = "O"
+		check_stamina_bar = Cstr(stamina_tocheck)
 	Else 
 		check_stamina_bar = "E"
 	End If

@@ -111,7 +111,7 @@ coWine = "170E73-090909"
 coWhite = "FFFFFF"
 
 
-sColorLv1= coWhite
+sColorLv1= "FFFFFF-090909"
 sColorStart = coRed
 sColorMainMenu = coBlack
 sColorMainHome = coCyan
@@ -336,16 +336,18 @@ ElseIf ReadUIConfig("sLevel")=5 then
 	sLevel = 5
 End If
 If ReadUIConfig("Cycles") = 0 Then 
-	Cycles = 30
+	Cycles = 3
 ElseIf ReadUIConfig("Cycles") = 1 Then
-	Cycles = 60
+	Cycles = 30
 ElseIf ReadUIConfig("Cycles") = 2 Then
-	Cycles = 120
+	Cycles = 60
 ElseIf ReadUIConfig("Cycles") = 3 Then
-	Cycles = 300
+	Cycles = 120
 ElseIf ReadUIConfig("Cycles") = 4 Then
+	Cycles = 300
+ElseIf ReadUIConfig("Cycles") = 5 Then
 	Cycles = 600
-ElseIf ReadUIConfig("Cycles")=5 then
+ElseIf ReadUIConfig("Cycles")=6 then
 	Cycles = 1800
 End if
 If ReadUIConfig("Helper") = 0 Then 
@@ -355,7 +357,6 @@ ElseIf ReadUIConfig("Helper") = 1 Then
 ElseIf ReadUIConfig("Helper") = 2 Then
 	Helper = 2
 End If
-
 /*
 iPutFlag = 1
 DogeMode = 1
@@ -740,7 +741,7 @@ Delay 1000
 
 //CheckExploring
 Rem CEing
-btmp = bFlag(iRot, rScale, iPosExploreHome(0), iPosExploreHome(1), iClickYes(0), iClickYes(1), sColorExploreHome, 0, rTimeStep, 0, 5)
+btmp = bFlag(iRot, rScale, iPosExploreHome(0), iPosExploreHome(1), iClickYes(0), iClickYes(1), sColorExploreHome, 0, rTimeStep, 0, 1)
 If btmp = 1 Then 
    	Goto Refresh	
 End If
@@ -764,6 +765,7 @@ End If
 
 //FuckingDoge
 Rem FDoge
+Delay 1000
 If PunchPower = 1 Then 
 	Goto fight
 End If
@@ -790,6 +792,7 @@ TracePrint sPosLv1(1)
 			Else 
 			isDoge = 0
 			TracePrint "No Doge!!"
+			ShowMessage "Hum..."
 			Goto fight
 		End If
 		Delay 50
@@ -797,7 +800,7 @@ TracePrint sPosLv1(1)
 	Loop
 	isDoge = 1
 	TracePrint "Is Doge!!"
-	ShowMessage " Doge!!"
+	ShowMessage "Wow Doge!!"
 End If
 
 //fight

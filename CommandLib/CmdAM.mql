@@ -219,6 +219,18 @@ Function fTap(x, y, rotate, scale)
 
 End Function
 
+Function fTouchDown(x, y, id, rotate, scale)
+	
+	Dim txy(1)
+	If 0 = coord_trans(x, y, txy, rotate, scale) Then
+		fTouchDown = 0
+	Else
+		TouchDown txy(0), txy(1), id
+		fTouchDown = 1
+	End If
+	
+End Function
+
 Function fSwipe(x1, y1, x2, y2, rotate, scale)
 
 	Dim txy1(1), txy2(1)
@@ -240,6 +252,17 @@ Function fCmpColor(x, y, scolor, bequal, rotate, scale)
 		fCmpColor = -2
 	Else
 		fCmpColor = CmpColor(txy(0), txy(1), scolor, bequal)
+	End If
+	
+End Function
+
+Function fGetPixelColor(x, y, rotate, scale)
+	
+	Dim txy(1)
+	If 0 = coord_trans(x, y, txy, rotate, scale) Then
+		fGetPixelColor = ""
+	Else
+		fGetPixelColor = GetPixelColor(txy(0), txy(1))
 	End If
 	
 End Function

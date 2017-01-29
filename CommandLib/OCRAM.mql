@@ -435,7 +435,7 @@ Function rank(x1, y1, x2, y2, rotate, scale)
 
 	'-----------------------------------------------------------------------
 
-	Dim color = Array("F52B45", "FFAA63", "87C629", "00F6FF", "297CE6", "4040FA", "44DFFD", "7D49AF")
+	Dim color = Array("E92E5D", "FEAE67", "72C737", "30F6FD", "046DE7", "413FF8", "0882D0", "7C48AE")
 	Dim index = Array("F"     , "E"     , "D"     , "C"     , "B"     , "A"     , "S"     , "U")
 	
 	Dim ix1, iy1, ix2, iy2, width, height

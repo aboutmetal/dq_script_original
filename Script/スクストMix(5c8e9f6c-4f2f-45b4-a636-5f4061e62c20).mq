@@ -176,7 +176,6 @@ iClickLevellowest = Array(500, 700)
 iPosReidooburiHP = Array(920, 182)
 sPosLv1 = Array(898, 145)
 iPosLv1 = Array(898, 145)
-
 // Points
 iClickNone = Array(1050,200)
 
